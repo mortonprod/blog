@@ -1,0 +1,41 @@
+﻿/*Cut off at 480px which is ~ mobile landscape.*/
+/*Bulb should fill up screen if portrait(<480px) and should leave space(on right and left) for info if larger than 480px*/
+body{
+    margin:0;
+    background-color:black;
+    width:100vw;
+    height:100vh;
+}
+.bulb{
+    position:relative;
+    left:(1/10)*100%;
+    width:(4/5)*100%;
+    top:5%;
+    height:50%;
+    /*Min width or higher.*/
+    @media only screen and (min-width: 480px) {
+        top:20%;
+        left:(1/6)*100%;
+        width:(2/3)*100%;
+    }
+}
+
+svg{
+    position:absolute;
+    top:0;
+    width:50%;
+    height:100%;
+    &.first{
+        left:25%;
+    }
+    &.second{
+        right:25%;
+    }
+}
+/*Polygon should fill the full size of the svg*/
+polygon{
+    position:absolute;
+    width:100%;
+    height:100%;
+}
+
