@@ -1,0 +1,53 @@
+﻿///Each blog post must follow a single layout. A basic principle in my opinion. MacDonalds has roughly the same menu in 
+///every region of the world. Give or take a bit of flair so you know what you get each time.
+///Import here to get intellisense.
+@import "../modules/media";
+.title{
+    ///What the title should have at the smallest width.
+    float: left;
+    width: 70%; 
+    ///What the title should be over written with for each size increase
+    @include responsive(wide-screens) {
+        width: 80%; 
+    }  @include responsive(medium-screens) {   
+        width: 50%; 
+        font-size: 14px; 
+    }  @include responsive(small-screens) { 
+        float: none;  
+        width: 100%;  
+        font-size: 12px;  
+    }
+} 
+.post{
+    ///What the title should have at the smallest width.
+    float: left;
+    width: 70%; 
+    ///What the title should be over written with for each size increase
+    @include responsive(wide-screens) {
+        width: 80%; 
+    }  @include responsive(medium-screens) {   
+        width: 50%; 
+        font-size: 14px; 
+    }  @include responsive(small-screens) { 
+        float: none;  
+        width: 100%;  
+        font-size: 12px;  
+    }
+    .elaborate {
+    }
+    .caveat{
+    }
+    .linkSynopsis{
+    }
+    aside{
+        font-size: 12px;  
+    }
+    .otherPost{
+
+    }
+}
+/*Must be id for navigation.*/
+#flop,turn,river{
+
+}
+
