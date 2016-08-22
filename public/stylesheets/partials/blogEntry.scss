@@ -1,53 +1,118 @@
-﻿///Each blog post must follow a single layout. A basic principle in my opinion. MacDonalds has roughly the same menu in 
+﻿///Each blog post must follow a single layout. A basic principle in my opinion. MacDonalds has roughly the same menu in
 ///every region of the world. Give or take a bit of flair so you know what you get each time.
 ///Import here to get intellisense.
-@import "../modules/media";
-.title{
+@import "../modules/_media";
+/*Import the font we want when we send public files.*/
+@import 'https://fonts.googleapis.com/css?family=Playfair+Display';
+///Reset styles. This should be in separate file, since we will import this with other files.
+///Must be called at somepoint though. At the start of running to initialise fresh palette since browsers use different defaults.
+* {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        font-size: 100%;
+        vertical-align: baseline;
+        background: transparent;
+}
+////All size information is stored in the outer most block. You then work relative to this.
+.title {
+    font-family: 'Playfair Display', serif;
+    width: 100%;
+    height:100vh;
+    ///This is the font for title. You will change h1 and paragraph font-size, and then responsive font-size using this as reference.
+    font-size:70px;
+    text-align:center;
+    ///Background image positioned in centre, with size of 50% width and aspect-ratio correct height. 
+    background-image:url(../../images/lightBulb-crop.jpg);
+    background-position: 50% 50%;
+    background-size:50% auto;
+    background-repeat:no-repeat;
+    background-color:black;
+    ///True at all times. However it can be overwritten with media..
+    h1 {
+        ///Need to specify position to allow movement.
+        position:relative;
+        top:20%;
+        font-size: 100%;
+        color:white;
+    }
+    p {
+        position:relative;
+        top:40%;
+        font-size: 80%;
+        color:white;
+    }
+
+    ///Must order largest to smallest since large will always be true and then medium, then small
+    ///You need to overwrite top to bottom.
+    @include responsive(wide-screens) { ///True for 1200px or smaller.
+        h1 {
+            font-size: 110%;
+        }
+
+        p {
+            font-size: 80%;
+        }
+    }
+    @include responsive(medium-screens) {///True for 760px or smaller.
+        h1 {
+            font-size: 60%;
+        }
+        p {
+            font-size: 50%;
+        }
+    }
+    @include responsive(small-screens) {///True 400px or smaller.
+        h1 {
+            font-size: 50%;
+        }
+        p {
+            font-size: 40%;
+        }
+    }
+}
+
+.post {
     ///What the title should have at the smallest width.
     float: left;
-    width: 70%; 
+    width: 70%;
+
+    .flop, .turn, .river {
+        margin: 0;
+    }
     ///What the title should be over written with for each size increase
     @include responsive(wide-screens) {
-        width: 80%; 
-    }  @include responsive(medium-screens) {   
-        width: 50%; 
-        font-size: 14px; 
-    }  @include responsive(small-screens) { 
-        float: none;  
-        width: 100%;  
-        font-size: 12px;  
+        width: 80%;
     }
-} 
-.post{
-    ///What the title should have at the smallest width.
-    float: left;
-    width: 70%; 
-    ///What the title should be over written with for each size increase
-    @include responsive(wide-screens) {
-        width: 80%; 
-    }  @include responsive(medium-screens) {   
-        width: 50%; 
-        font-size: 14px; 
-    }  @include responsive(small-screens) { 
-        float: none;  
-        width: 100%;  
-        font-size: 12px;  
+
+    @include responsive(medium-screens) {
+        width: 50%;
+        font-size: 14px;
     }
+
+    @include responsive(small-screens) {
+        float: none;
+        width: 100%;
+        font-size: 12px;
+    }
+
     .elaborate {
     }
-    .caveat{
-    }
-    .linkSynopsis{
-    }
-    aside{
-        font-size: 12px;  
-    }
-    .otherPost{
 
+    .caveat {
+    }
+
+    .linkSynopsis {
+    }
+
+    aside {
+        font-size: 12px;
+    }
+
+    .otherPost {
     }
 }
 /*Must be id for navigation.*/
-#flop,turn,river{
-
+#flop, turn, river {
 }
-

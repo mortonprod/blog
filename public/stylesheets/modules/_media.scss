@@ -1,7 +1,5 @@
 ﻿///This is the content specific dimensions.
-$width-small:  400px;
-$width-medium: 760px; 
-$width-large:  1200px;
+@import "../modules/_variables.scss";
 /// @param width this is used to select a width and place content of responsive in it.
 @mixin responsive($width) {  
     @if $width == wide-screens {    
