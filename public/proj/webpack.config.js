@@ -1,44 +1,41 @@
-﻿module.exports = {
-    entry: "./src/index.tsx",
+﻿'use strict';
+var webpack = require('webpack');
+var config = {
+    entry: {
+        app: ['./src/index.tsx', "bootstrap-sass!./bootstrap-sass.config.js"],
+        vendors: ['react']
+    },
+    plugins: [
+        new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
+        new webpack.ProvidePlugin({
+            '$': 'jquery',
+            'jQuery': 'jquery',
+            'window.jQuery': 'jquery'
+        })
+    ],
     output: {
-        filename: "./dist/bundle.js",
+        path: './dist',
+        filename: 'bundle.js'
     },
-
-    // Enable sourcemaps for debugging webpack's output.
-    devtool: "source-map",
-
     resolve: {
-        // Add '.ts' and '.tsx' as resolvable extensions.
         extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
-    },
 
+    },
     module: {
+        noParse: ['react'],
         loaders: [
-            // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
+            { test: /bootstrap-sass\/assets\/javascripts\//, loader: 'imports?jQuery=jquery' },
             { test: /\.tsx?$/, loader: "ts-loader" },
-            {
-                test: /\.scss$/,
-                loaders: ["style", "css", "sass"]
-            },
+            { test: /\.scss$/, loader: "style!css!sass?outputStyle=expanded" },
             { test: /\.(png|jpg)$/, loader: 'file-loader' },
-            {
-                test: /vendor\/.+\.(jsx|js)$/,
-                loader: 'imports?jQuery=jquery,$=jquery,this=>window'
-            }
-        ],
+            { test: /\.woff(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=application/font-woff" },
+            { test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=application/font-woff" },
+            { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=application/octet-stream" },
+            { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: "file" },
+            { test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=image/svg+xml" }
 
-        preLoaders: [
-            // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-            { test: /\.js$/, loader: "source-map-loader" }
         ]
-    },
-
-    // When importing a module whose path matches one of the following, just
-    // assume a corresponding global variable exists and use that instead.
-    // This is important because it allows us to avoid bundling all of our
-    // dependencies, which allows browsers to cache those libraries between builds.
-    externals: {
-        "react": "React",
-        "react-dom": "ReactDOM"
-    },
+    }
 };
+
+module.exports = config;
