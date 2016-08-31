@@ -21,6 +21,7 @@ export class myRouter{
         ReactDOM.render((
             <Router history={browserHistory}>
                 <Route path="/" component= {Main} >
+
                     <IndexRoute component={Home} />
                     <Route path="webdev" component = {WebDev}>
                         <Route path="postOne" component = {Post1W}/>
@@ -33,3 +34,4 @@ export class myRouter{
         ), document.getElementById('main'))
     }
 }
+
