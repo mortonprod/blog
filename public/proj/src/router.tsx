@@ -7,27 +7,25 @@ import Home from "./components/home/home.tsx";
 import Nav from "./components/nav/nav.tsx";
 import WebDev from "./components/webDev/webDev.tsx";
 import MixInMatch from "./components/mixInMatch/mixInMatch.tsx";
-import Post1W  from "./components/webDev/post1/post1.tsx";
+import T1  from "./components/webDev/topic1/topic1.tsx";
+import T1P1 from "./components/webDev/topic1/post1/post1.tsx";
 import Post1M from "./components/mixInMatch/post1/post1.tsx";
 import { Main } from './components/templates/Main'
 ///TODO:How to specify meta data and 
-///Render info:
-//  1) Main: This is everything shared with web and mixin.
-//      >> url(/) will render as index "Home".
-//  2) Blogtype(webdev or mixInMatch) >>> This will add shadow dom components for each type of blog
-//  3) The add your content. 
+///Place first post twice for url finding with and without post1 in url.
+///TODO:Note this is going to get the full blog. You need to query the server in the long run.
 export class myRouter{
     static setup1() {
         ReactDOM.render((
             <Router history={browserHistory}>
-                <Route path="/" component= {Main} >
-
-                    <IndexRoute component={Home} />
-                    <Route path="webdev" component = {WebDev}>
-                        <Route path="postOne" component = {Post1W}/>
-                    </Route>
-                    <Route path="mixandmatch" component = {MixInMatch}>
-                        <Route path="postOne" component = {Post1M}/>
+                <Route path="/" >
+                    <IndexRoute component={Home} /> // This reached if nothing else given.
+                    <Route path="webdev"> //If /webdev then send back webdev or post specified /webdev/firstPost
+                        <IndexRoute component={WebDev} />
+                        <Route path="topic1" component={T1} >
+                            <IndexRoute component={T1P1} />
+                            <Route path="post1" component={T1P1} />
+                        </Route>
                     </Route>
                 </Route>
             </Router>
