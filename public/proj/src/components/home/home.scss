@@ -1,0 +1,64 @@
+﻿.home{
+    text-align:center;
+    font-family: 'Baloo Chettan', cursive;
+    width:100%;
+    padding:0;
+    .image{
+        background-image:url(./nature.jpg);
+        background-position:50% 50%;
+        background-repeat:no-repeat;
+        height:100vh;
+    }
+   .row{
+        /*border:solid;*/
+    }
+    .width{
+        height:100px;
+    }
+    h4 {
+        position:relative;
+        right:20px;
+        top:15%;
+    }
+    
+    .blueToPink{
+        background: #DC2424; /* fallback for old browsers */
+        background: -webkit-linear-gradient(to left, #DC2424 , #4A569D); /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(to left, #DC2424 , #4A569D); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    }
+    .yellowToGreen{
+        background: #3CA55C; /* fallback for old browsers */
+        background: -webkit-linear-gradient(to left, #3CA55C , #B5AC49); /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(to left, #3CA55C , #B5AC49); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    }
+    .blueToPurple{
+        background: #BE93C5; /* fallback for old browsers */
+        background: -webkit-linear-gradient(to left, #BE93C5 , #7BC6CC); /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(to left, #BE93C5 , #7BC6CC); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    }
+    /*You create the style using two curved lines superimposed. */
+    hr {
+        /*TODO:Remember difference between &.fancy and .fancy. First is hr with class fancy and .fancy is any child of hr with class=fancy. */
+        &.fancy { 
+            height: 30px; 
+            border-style: solid; 
+            border-color: #8c8b8b; 
+            border-width: 1px 0 0 0; 
+            border-radius: 20px; 
+            &:before{
+                display: block; 
+                content: ""; 
+                height: 30px; 
+                margin-top: -31px; 
+                border-style: solid; 
+                border-color: #8c8b8b; 
+                border-width: 0 0 1px 0; 
+                border-radius: 20px; 
+            }
+        } 
+    }
+    .cBlack{
+        background-color:black;
+        color:white;
+    }
+}
