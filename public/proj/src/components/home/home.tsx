@@ -20,6 +20,21 @@ export default class Home extends React.Component<{}, {}> {
                             </h1>
                         </div>
                     </div>
+                    <div className="row gly">
+                        <div className="col-md-12">
+                            <span className="glyphicon glyphicon-chevron-down"/>
+                        </div>
+                    </div>
+                    <div className="row gly">
+                        <div className="col-md-12">
+                            <span className="glyphicon glyphicon-chevron-down"/>
+                        </div>
+                    </div>
+                    <div className="row gly">
+                        <div className="col-md-12">
+                            <span className="glyphicon glyphicon-chevron-down"/>
+                        </div>
+                    </div>
                 </section>
 
                 <article className="row blueToPink">
