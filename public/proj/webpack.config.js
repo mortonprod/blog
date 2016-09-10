@@ -13,6 +13,14 @@
 ///},
 
 
+
+//////////////////////////////////////////////
+///TODO:Regex
+///TODO:Note /\ just mean place actual \ and not \ on own which means escape character.
+/// * match any number whats before it.
+/// ? match zero or more
+/// + match one or more.
+/////////////////////////////
 var HtmlWebpackPlugin = require('html-webpack-plugin');///Does not include app entry so not very useful.No app entry point. Only once used.
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var StaticSiteGeneratorPlugin = require('static-site-generator-webpack-plugin');
@@ -27,13 +35,15 @@ var locals = {
 }
 var config = {
     entry: {
-        app: ['./src/index.tsx', "bootstrap-sass!./bootstrap-sass.config.js"],
+       // app: ['./src/index.tsx', "bootstrap-sass!./bootstrap-sass.config.js"],
+        app: ['./src/index.tsx'],
+
         vendors: ['react']
     },
     ///Webpack-dev-server.
     devServer: {
         port: 3000,
-        ///Seems silly since we are still sending a request.
+        ///TODO:NOTESeems silly since we are still sending a request. <<Fixed since I was not using hash browser.
         historyApiFallback: true ///This will fall back to index.html to server new asset but change url.
     },
     plugins: [
@@ -69,12 +79,19 @@ var config = {
             },
             { test: /bootstrap-sass\/assets\/javascripts\//, loader: 'imports?jQuery=jquery' },
             { test: /\.tsx?$/, loader: "ts-loader" },
-            { test: /\.(png|jpg)$/, loader: 'file-loader' },
+            {
+                test: /\.(jpe?g|png|gif|svg)$/i,
+                loaders: [
+                    'file?hash=sha512&digest=hex&name=[hash].[ext]'
+                    //'image-webpack?bypassOnDebug&optimizationLevel=7&interlaced=false' To minimise images. Not working.
+                ]
+            },
             { test: /\.woff(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=application/font-woff" },
             { test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=application/font-woff" },
             { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=application/octet-stream" },
             { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: "file" },
             { test: /\.svg(\?v=\d+\.\d+\.\d+)?$/, loader: "url?limit=10000&mimetype=image/svg+xml" }
+
 
         ]
     }
