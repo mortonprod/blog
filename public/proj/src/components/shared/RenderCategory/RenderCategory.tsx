@@ -10,18 +10,19 @@ export default class RenderCategory extends React.Component<IRenderCategoryProps
     static listOfCategoriesAndInfo :any = []; 
     cat: number;
     post: number;
-    constructor(cat: number, post: number = 0) {
+    constructor(cat: number, post: number = 0, props: IRenderCategoryProps, state: IRenderCategoryState) {
         super();
-        this.cat = cat;
+        this.cat = cat.params.category;
+        this.cat = 3;
         this.post = post;
-        this.state = { title: "", content: "" };
+        this.state = { title: "Title here!", content: "Content here!" };
     }
     /// @function RenderCategory.getPosts
     /// Get all posts for a certain category and then resolve promise.
     /// @param postUrl {string} The url for all posts
     /// @param category {number} The category which we want to get all posts
     /// @param resolve {function} Let promise know we got it.
-    private static getPosts(postUrl: string, cat: number, resolve:any) {
+    static getPosts(postUrl: string, cat: number, resolve:any) {
         let url = postUrl + "?categories=" + cat;
         $.get(url, function (result) {
             return result;
@@ -39,22 +40,25 @@ export default class RenderCategory extends React.Component<IRenderCategoryProps
             resolve(category);
         });
     }
+    ///TODO:Note the this binding to the class and not to where the function is called inside the promise/then function.
     componentWillMount() {
         let promise = new Promise(function (resolve, reject) {
             let ids: any = [];
             for (let i = 0; i < RenderCategory.listOfCategoriesAndInfo.length; i++) {
                 ids.push(RenderCategory.listOfCategoriesAndInfo[i]["id"]);
             }
-            if ($.inArray(this.cat, ids) === -1) {
-                RenderCategory.getPosts(globalStore.postUrl, this.cat, resolve)
+            if ($.inArray(3, ids) === -1) {
+                RenderCategory.getPosts(globalStore.postUrl, 3, resolve)
             } else {
-                resolve(RenderCategory.listOfCategoriesAndInfo[$.inArray(this.cat, ids)]);
+                resolve(RenderCategory.listOfCategoriesAndInfo[$.inArray(3, ids)]);
             }
-        });
+        }.bind(this));
         promise.then(function (data: any) {
-            this.state.title = data.posts[this.post].title;
-            this.state.content = data.posts[this.post].content;
-        })
+            this.setState({
+                title: data.posts[0].title,
+                content: data.posts[0].content
+            });
+        }.bind(this))
     }
     render() {
         return (
