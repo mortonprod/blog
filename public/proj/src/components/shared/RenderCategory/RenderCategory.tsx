@@ -1,21 +1,17 @@
 ﻿/// <reference path="../../../../typings/index.d.ts" />
 import * as React from 'react'
 import globalStore from '../../../global.ts';
-interface IRenderCategoryProps { cat: number, post: number };
 interface IRenderCategoryState { title: any, content:any };
 import './RenderCategory.scss'
 ///Store list of comment objects to create dynamically: http://stackoverflow.com/questions/32421657/create-react-element-dynamically
-
+///TODO:Note you can not change props!!!!!!!!!!!
 export default class RenderCategory extends React.Component<IRenderCategoryProps, IRenderCategoryState> {
-    static listOfCategoriesAndInfo :any = []; 
-    cat: number;
+    static listOfCategoriesAndInfo: any = [];
+    ///TODO:Note params is using the name given in the url. See the router :category/:post
     post: number;
-    constructor(cat: number, post: number = 0, props: IRenderCategoryProps, state: IRenderCategoryState) {
+    cat: number;
+    constructor() {
         super();
-        this.cat = cat.params.category;
-        this.cat = 3;
-        this.post = post;
-        this.state = { title: "Title here!", content: "Content here!" };
     }
     /// @function RenderCategory.getPosts
     /// Get all posts for a certain category and then resolve promise.
@@ -27,7 +23,7 @@ export default class RenderCategory extends React.Component<IRenderCategoryProps
         $.get(url, function (result) {
             return result;
         }).then((result) => {
-            let category = { id: cat, posts: []};
+            let category = { id: cat, posts: [] };
             for (let i = 0; i < result.length; i++) {
                 let title = result[i]["title"]["rendered"];
                 let content = result[i]["content"]["rendered"];
@@ -42,21 +38,35 @@ export default class RenderCategory extends React.Component<IRenderCategoryProps
     }
     ///TODO:Note the this binding to the class and not to where the function is called inside the promise/then function.
     componentWillMount() {
+        if (this.props.params.category !== undefined) {
+            this.cat = this.props.params.category;
+        } else {
+            this.cat = 0;
+        }
+        if (this.props.params.post !== undefined) {
+            this.post = this.props.params.post;
+        } else {
+            this.post = 0;
+        }
+        this.setState({
+            title: "",
+            content: ""
+        });
         let promise = new Promise(function (resolve, reject) {
             let ids: any = [];
             for (let i = 0; i < RenderCategory.listOfCategoriesAndInfo.length; i++) {
                 ids.push(RenderCategory.listOfCategoriesAndInfo[i]["id"]);
             }
-            if ($.inArray(3, ids) === -1) {
-                RenderCategory.getPosts(globalStore.postUrl, 3, resolve)
+            if ($.inArray(this.cat, ids) === -1) {
+                RenderCategory.getPosts(globalStore.postUrl, this.cat, resolve)
             } else {
-                resolve(RenderCategory.listOfCategoriesAndInfo[$.inArray(3, ids)]);
+                resolve(RenderCategory.listOfCategoriesAndInfo[$.inArray(this.cat, ids)]);
             }
         }.bind(this));
         promise.then(function (data: any) {
             this.setState({
-                title: data.posts[0].title,
-                content: data.posts[0].content
+                title: data.posts[this.post].title,
+                content: data.posts[this.post].content
             });
         }.bind(this))
     }
