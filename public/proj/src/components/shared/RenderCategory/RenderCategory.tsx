@@ -5,7 +5,7 @@ interface IRenderCategoryState { title: any, content:any };
 import './RenderCategory.scss'
 ///Store list of comment objects to create dynamically: http://stackoverflow.com/questions/32421657/create-react-element-dynamically
 ///TODO:Note you can not change props!!!!!!!!!!!
-export default class RenderCategory extends React.Component<IRenderCategoryProps, IRenderCategoryState> {
+export default class RenderCategory extends React.Component<{}, IRenderCategoryState> {
     static listOfCategoriesAndInfo: any = [];
     ///TODO:Note params is using the name given in the url. See the router :category/:post
     post: number;
@@ -36,15 +36,17 @@ export default class RenderCategory extends React.Component<IRenderCategoryProps
             resolve(category);
         });
     }
-    ///TODO:Note the this binding to the class and not to where the function is called inside the promise/then function.
-    componentWillMount() {
-        if (this.props.params.category !== undefined) {
-            this.cat = this.props.params.category;
+    componentWillReceiveProps(nextProps: any) {
+        this.getNewCategory(nextProps.params.category, nextProps.params.post);
+    }
+    getNewCategory(category: number, post: any) {
+        if (category !== undefined) {
+            this.cat = category;
         } else {
             this.cat = 0;
         }
-        if (this.props.params.post !== undefined) {
-            this.post = this.props.params.post;
+        if (post !== undefined) {
+            this.post = post;
         } else {
             this.post = 0;
         }
@@ -52,7 +54,7 @@ export default class RenderCategory extends React.Component<IRenderCategoryProps
             title: "",
             content: ""
         });
-        let promise = new Promise(function (resolve, reject) {
+        let promise = new Promise(function (resolve: any, reject: any) {
             let ids: any = [];
             for (let i = 0; i < RenderCategory.listOfCategoriesAndInfo.length; i++) {
                 ids.push(RenderCategory.listOfCategoriesAndInfo[i]["id"]);
@@ -69,6 +71,10 @@ export default class RenderCategory extends React.Component<IRenderCategoryProps
                 content: data.posts[this.post].content
             });
         }.bind(this))
+    }
+    ///TODO:Note the this binding to the class and not to where the function is called inside the promise/then function.
+    componentWillMount() {
+        this.getNewCategory(this.props.params.category,this.props.params.post);
     }
     render() {
         return (
