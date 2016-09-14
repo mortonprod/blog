@@ -36,7 +36,10 @@ var locals = {
 var config = {
     entry: {
        // app: ['./src/index.tsx', "bootstrap-sass!./bootstrap-sass.config.js"],
-        app: ['./src/index.tsx'],
+        home: "./src/entryHome",
+        webdev: "./src/entryWebDev",
+        category: "./src/entryCategory",
+        ///app: ['./src/index.tsx'],
 
         vendors: ['react']
     },
@@ -60,7 +63,7 @@ var config = {
 
     output: {
         path: './dist',
-        filename: 'bundle.js',
+        filename: '[name].js',
         libraryTarget: 'umd' // Need this for static site generation.
     },
     resolve: {
