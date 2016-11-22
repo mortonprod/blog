@@ -1,6 +1,6 @@
 ﻿import * as React from 'react';
 import * as reactDOM from 'react-dom';
-
+import Wrapper from './wrapper';
 interface props {
 }
 export default class Analysis extends React.Component<props, {}> {
@@ -18,7 +18,7 @@ export default class Analysis extends React.Component<props, {}> {
     }
     render() {
         return (
-            <div>
+            <Wrapper>
                 <h1 className="text-center login-title"> Sign in </h1>
                 <div className="account-wall">
                     <form className='form-signin'>
@@ -29,7 +29,7 @@ export default class Analysis extends React.Component<props, {}> {
                     </form>
                 </div>
                 <a href='/signup'  className='text-center new-account'> Create an account </a>
-            </div>
+            </Wrapper>
         );
     }
 }
