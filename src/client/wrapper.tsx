@@ -2,7 +2,7 @@
 import * as React from 'react';
 import * as reactDOM from 'react-dom';
 import * as ReactDOMServer from 'react-dom/server';
-const Velocity = require('velocity-animate');
+import animations from './animations';
 //import velocity from "velocity-animate/velocity";
 /**
  * A simple wrapper 
@@ -19,90 +19,62 @@ const Velocity = require('velocity-animate');
  *
  * 
  */
-
+/**
+ * @interface
+ * @params{string} run Turn animation on
+ * @params{string} name Animation type to run.
+ * @params{number} duration The length of animation
+ */
 interface props {
-    normal?: boolean;
+    run: boolean;
+    name: string;
+    duration: number;
 }
 interface state {
-    properties: Array<any>;
-    properString: Array<String>;
-    DOMString: Array<String>;
-    styles: Array<Array<Object>>;
-    counter: number;
+}
+interface nameAndValue {
+    name: string;
+    value: string;
+}
+interface refAndStyles {
+    ref: Element;
+    styles: Array<nameAndValue>;
+}
+
+interface animationReturn {
+    run: Function;
+    refToStyles: Array<refAndStyles>;
 }
 
 export default class Wrapper extends React.Component<props, state> {
     constructor(props: any) {
         super();
     }
-    refs = [] as Array<Element>;
-    doSomething() { };
-    addRef(ref: Element) {
-        this.refs.push(ref);
-    }
+    animationComplete: animationReturn = null;
     /**
      * Add new properties to fill the child with. Will not over ride components props above you.
      * 
      */
     componentWillMount() {
         this.setState({
-            properties: [],
-            properString: [],
-            DOMString: [],
-            styles: [],
-            counter: 0
         });
 
     }
     counter() {
         this.setState({
-            properties: this.state.properties,
-            properString: this.state.properString,
-            DOMString: this.state.DOMString,
-            styles: this.state.styles,
-            counter: this.state.counter + 1
         });
     }
     componentDidMount() {
-        let temp = [] as any;
-        let styles = [] as any;
-        for (let i = 0; i < this.myRefs.length; i++) {
-            temp.push("DOM element: " + this.myRefs[i].nodeName + " Height:  " + window.getComputedStyle(reactDOM.findDOMNode(this.myRefs[i])).getPropertyValue("height"));
-            let info = window.getComputedStyle(reactDOM.findDOMNode(this.myRefs[i]));
-            Velocity(reactDOM.findDOMNode(this.myRefs[i]), { opacity: 0.0 }, { duration: 1000 });
-            Velocity(reactDOM.findDOMNode(this.myRefs[i]), { opacity: 1.0 }, { duration: 1000, loop: true });
-            for (let j = 0; j < info.length; j++) {
-                let propName = info.item(j);
-                let propValue = info.getPropertyValue(propName);
-                let pair = [propName, propValue];
-                styles.push(pair);
-                if (propName === "height") {
-                    let val = propValue.slice(0,-2); //get rid  of px
-                    console.log("val: "  + val )
-                    Velocity(reactDOM.findDOMNode(this.myRefs[i]), { height:50 + val  }, { duration: 10000 });
-                }
-                if (propName === "width") {
-                    let val = propValue.slice(0, -2); //get rid  of px
-                    console.log("val: " + val)
-                    Velocity(reactDOM.findDOMNode(this.myRefs[i]), { height: 50 + val }, { duration: 10000 });
-                }
-                if (propName === "left") {
-                    let val = propValue.slice(0, -2); //get rid  of px
-                    console.log("val: " + val)
-                    Velocity(reactDOM.findDOMNode(this.myRefs[i]), { height: 50 + val }, { duration: 10000 });
-                }
-
-
-            }
+        this.animationComplete = animations(this.props.name, this.props.duration, this.myRefs.map(reactDOM.findDOMNode));
+        this.setState({
+        });
+    }
+    componentWillReceiveProps(nextProps: props) {
+        if (this.animationComplete !== null && this.props.run) {
+            console.log("RUN");
+            this.animationComplete.run()
         }
 
-        this.setState({
-            properties: null,
-            properString: [""],
-            DOMString: temp,
-            styles,
-            counter: 0
-        });
     }
     myRefs = [] as Array<Element>;
     setRef(ref: Element) {
@@ -110,14 +82,6 @@ export default class Wrapper extends React.Component<props, state> {
         this.myRefs.push(ref);
     }
     render() {
-        let styleList = [] as any;
-        for (let i = 0; i < this.state.styles.length; i++) {
-            styleList.push(
-                <h4>
-                    name: {this.state.styles[i][0]}        value: {this.state.styles[i][1]}
-                </h4>
-            );
-        }
         const updateChildren = (
             <div>
                 {React.Children.map(this.props.children, (element: any, idx: any) => {
@@ -130,31 +94,36 @@ export default class Wrapper extends React.Component<props, state> {
                 <h1>The App Under Test!!! </h1>
                 <div>
                     {updateChildren}
-                    <div>
-                        <button onClick={() => { this.counter() } } width={"250px"} height={"250px"}> Element: {this.state.counter} </button>
-                    </div>
-                </div>
-                <div>
-                    <h1>
-                        Element rendered to string.
-                    </h1>
-                    <p>
-                        {this.state.properString[this.state.counter]}
-                    </p>
-                    <h1>
-                        Info
-                    </h1>
-                    <p>
-                        {this.state.DOMString[this.state.counter]}
-                    </p>
-                    <h1>
-                        Styles
-                    </h1>
-                    <div>
-                        {styleList}
-                    </div>
                 </div>
             </div>
         )
     }
 }
+//<div>
+//    <h1>
+//        Element rendered to string.
+//    </h1>
+//    <p>
+//        {this.state.properString[this.state.counter]}
+//    </p>
+//    <h1>
+//        Info
+//    </h1>
+//    <p>
+//        {this.state.DOMString[this.state.counter]}
+//    </p>
+//    <h1>
+//        Styles
+//    </h1>
+//    <div>
+//        {styleList}
+//    </div>
+//</div>
+//let styleList = [] as any;
+//for (let i = 0; i < this.state.styles.length; i++) {
+//    styleList.push(
+//        <h4>
+//            name: {this.state.styles[i][0]}        value: {this.state.styles[i][1]}
+//        </h4>
+//    );
+//}
