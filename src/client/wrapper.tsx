@@ -65,7 +65,7 @@ export default class Wrapper extends React.Component<props, state> {
         });
     }
     componentDidMount() {
-        this.animationComplete = animations(this.props.name, this.props.duration, this.myRefs.map(reactDOM.findDOMNode));
+       // this.animationComplete = animations(this.props.name, this.props.duration, this.myRefs.map(reactDOM.findDOMNode));
         this.setState({
         });
     }

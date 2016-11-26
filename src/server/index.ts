@@ -24,11 +24,11 @@ app.set('port', process.env.PORT || 3000);
 
 if (process.env.NODE_ENV === "development") {
     let server = new WebpackDevServer(webpack(config), {
-     //   contentBase: "./",
+        contentBase: "./bundle", ///Where to serve local assets on disk.
         hot: true,
         quiet: false,
         noInfo: false,
-        publicPath: "/bundle/",
+        publicPath: ".",
         stats: { colors: true }
     });
     server.listen(8081, "localhost", function () { });

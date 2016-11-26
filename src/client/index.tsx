@@ -69,37 +69,24 @@ export default class Analysis extends React.Component<props, state> {
         let img = (
             <img className="" style={divStyle} src={require("./images/broomCrop.png")}/>
         )
+        ///Can only get the elements which are exposed.
         return (
-            <BoxAnimation  chaseComponent = {img}  duration={2000} id={["#title"]}>
-                <h1 id="title" className="text-center login-title"> Sign in </h1>
+            <BoxAnimation  chaseComponent = {img}  duration={2000} id={["#title1", "#title2", "#title3"]}>
+                <h1 id="title1" className="text-center login-title"> Sign in </h1>
                 <div className="account-wall">
                     <form className='form-signin'>
-                        <input id="title" ref={(input) => this.email = input} type='text' name='email' className='form-control' placeholder='Email' required/>
-                        <input id="title" ref={(input) => this.password = input} type='password'  name='password' className='form-control' placeholder='Password' required/>
-                        <button id="title" onClick={this.submitHandler.bind(this)} className='btn btn-lg btn-primary btn-block'> Sign in </button>
+                        <input id="" ref={(input) => this.email = input} type='text' name='email' className='form-control' placeholder='Email' required/>
+                        <input id="" ref={(input) => this.password = input} type='password'  name='password' className='form-control' placeholder='Password' required/>
+                        <button id="" onClick={this.submitHandler.bind(this)} className='btn btn-lg btn-primary btn-block'> Sign in </button>
                         <span className="clearfix"/>
                     </form>
                 </div>
+                <h1 id="title2" className="text-center login-title"> Sign inout </h1>
                 <div style={h1style}>
-                    <a id="title" href='/signup'  className='text-center new-account'> Create an account </a>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
-                    <h1 id="title" className="text-center login-title"> Sign in </h1>
+                    <a id="" href='/signup'  className='text-center new-account'> Create an account </a>
                 </div>
+                <h1 id="title3" className="text-center login-title"> last </h1>
+
             </BoxAnimation>
         );
     }
