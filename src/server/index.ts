@@ -1,58 +1,32 @@
-﻿/// <reference path="../../typings/index.d.ts" />
-import * as express from 'express';
-import * as path from 'path'
-
-if (process.env.NODE_ENV === "development") {
-    var webpack = require('webpack');
-    var WebpackDevServer = require('webpack-dev-server');
-    var config = require('../webpack.config.js'); ///Called from dist folder!!!!
-    config.plugins.push(new webpack.HotModuleReplacementPlugin())
-    config.entry.index.unshift("webpack-dev-server/client?http://localhost:8081/", "webpack/hot/dev-server");
-    var proxy = require('proxy-middleware');
-    var url = require('url');
-}
-
-
+﻿import * as express from 'express';
+import * as path from 'path';
+import * as bodyParser from 'body-parser';
+import * as jsonfile from 'jsonfile';
 var app = express();
-app.use(express.static(path.join(__dirname, "dist")));
-
-app.get('/', function (req: any, res: any) {
-    res.send(renderFullPage());
+app.use(express.static(path.join(__dirname, "./assets")));
+app.use(bodyParser.urlencoded({ extended: true }));
+console.log(path.join(__dirname, "./assets"))
+app.get('/', function (req: express.Request, res: express.Response, next:any) {
+    //Send file not connected to express.
+    res.sendFile(path.join(__dirname, './assets','views', 'intro.html'));
+    //next();
 });
+app.post('/choice', function (req: express.Request, res: express.Response) {
+    console.log(req.body)
+    jsonfile.readFile(path.join(__dirname, './assets', 'options.json'), function (err:any, obj:any) {
+        console.log(obj)
+        // Using another variable to prevent confusion.
+        var fileObj = obj;
 
-app.set('port', process.env.PORT || 3000);
+        // Modify the text at the appropriate id
+        fileObj[req.body.subject] = fileObj[req.body.subject] + 1;
 
-if (process.env.NODE_ENV === "development") {
-    let server = new WebpackDevServer(webpack(config), {
-        contentBase: "./bundle", ///Where to serve local assets on disk.
-        hot: true,
-        quiet: false,
-        noInfo: false,
-        publicPath: ".",
-        stats: { colors: true }
+        // Write the modified obj to the file
+        jsonfile.writeFile(path.join(__dirname, './assets', 'options.json'), fileObj, function (err:any) {
+            if (err) throw err;
+        });
     });
-    server.listen(8081, "localhost", function () { });
-    app.use('/bundle', proxy(url.parse('http://localhost:8081/bundle')));
-}
-
-var server = app.listen(app.get('port'), function () {
 });
+app.listen(3000, function () {});
 
 
-function renderFullPage() {
-    return `
-    <!doctype html>
-    <html>
-      <head>
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-        <title>Start of blog</title>
-      </head>
-      <body>
-        <div id="root"></div>
-        <script src="/bundle/vendor.bundle.js"></script>
-        <script src="/bundle/index.js"></script>
-      </body>
-    </html>
-    `
-}
