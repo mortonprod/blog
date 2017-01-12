@@ -1,0 +1,159 @@
+﻿/// Block Element
+/// @access public
+/// @param {String} $element - Element's name
+@mixin element($element) {
+    &__#{$element} {
+        @content;
+    }
+}
+
+/// Block Modifier
+/// @access public
+/// @param {String} $modifier - Modifier's name
+@mixin modifier($modifier) {
+    &--#{$modifier} {
+        @content;
+    }
+}
+
+//font-family: 'Oswald', sans-serif;
+//font-family: 'Raleway', sans-serif;
+//font-family: 'Bungee Shade', cursive;
+
+$color-primary-0: #343477; // Main Primary color */
+$color-primary-1: #8080B3;
+$color-primary-2: #565695;
+$color-primary-3: #1A1A59;
+$color-primary-4: #09093B;
+
+$color-secondary-1-0: #A7383D; // Main Secondary color (1) */
+$color-secondary-1-1: #FBA7AB;
+$color-secondary-1-2: #D1686E;
+$color-secondary-1-3: #7D151A;
+$color-secondary-1-4: #540004;
+
+$color-secondary-2-0: #789E35; // Main Secondary color (2) */
+$color-secondary-2-1: #D1ED9E;
+$color-secondary-2-2: #A2C563;
+$color-secondary-2-3: #537614;
+$color-secondary-2-4: #334F00;
+
+
+.body {
+    text-align: center;
+    //padding: 10px;
+    background-color: $color-primary-1;
+}
+
+.header {
+    background: linear-gradient( to bottom, $color-primary-0, transparent );
+    //background: linear-gradient( to bottom, red, transparent );
+    border-bottom-left-radius:200px;
+    border-bottom-right-radius:200px;
+    width: 100%;
+
+    @include element('title') {
+        color: black;
+    }
+
+    @include element('img') {
+        > div {
+            background-image: url(./img/three.png);
+            height: 200px;
+            background-size: 20%;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+    }
+}
+
+.section {
+    h1 {
+        font-size: 5.9vw;
+    }
+
+    h2 {
+        font-size: 3.0vh;
+    }
+
+    p {
+        font-size: 2vmin;
+    }
+
+    @include element('info') {
+        color: $color-primary-3;
+        font-family: 'Oswald', sans-serif;
+    }
+
+    @include element('need') {
+        font-family: 'Bungee Shade', cursive;
+        color: $color-primary-0;
+
+        @include element('input') {
+
+            input[type="radio"] {
+                display:none;
+                &:checked {
+                    + label {
+                        span::after {
+                            left: -27px;
+                            background-color: #EBFF43;
+                        }
+                    }
+                }
+            }
+            label {
+                position: relative;
+
+                span {
+                    &::before, &::after {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        bottom: 0;
+                        margin: auto;
+                    }
+
+                    &::before {
+                        left: -52px;
+                        width: 45px;
+                        height: 25px;
+                        background-color:green;
+                        border-radius: 50px;
+                    }
+
+                    &::after {
+                        left: -49px;
+                        width: 17px;
+                        height: 17px;
+                        border-radius: 10px;
+                        background-color: red;
+                        transition: left .25s, background-color .25s;
+                    }
+
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+            }
+        }
+
+        @include element('submit') {
+            position: relative;
+
+            input {
+                width: 100%;
+                height: 100%;
+            }
+
+            span {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+            }
+        }
+    }
+
+    @include element('disclaimer') {
+    }
+}

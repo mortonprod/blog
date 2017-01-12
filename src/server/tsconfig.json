@@ -1,0 +1,16 @@
+﻿{
+  "files": [
+    "./index.ts"
+  ],
+  "compilerOptions": {
+    "removeComments": true,
+    "noImplicitAny": true,
+    "target": "es5",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noEmitOnError": false
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
