@@ -18,9 +18,7 @@ gulp.task("moveHTML", [], function () {
 });
 
 
-gulp.task("webpack", [], function () {
-    shell.task("webpack -p");
-})
+gulp.task("webpack", shell.task("webpack -p"));
 
 gulp.task("server", [], function () {
     return gulp.src('src/server/*.ts')

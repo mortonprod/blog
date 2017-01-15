@@ -38,47 +38,49 @@ $color-secondary-2-2: #A2C563;
 $color-secondary-2-3: #537614;
 $color-secondary-2-4: #334F00;
 
+h1 {
+    font-size: 5.9vw;
+}
+
+h2 {
+    font-size: 3.0vh;
+}
+
+p {
+    font-size: 2vmin;
+}
+
 
 .body {
     text-align: center;
-    //padding: 10px;
-    background-color: $color-primary-1;
+    padding: 0;
+    margin: 0;
+    background-color:pink;
 }
 
 .header {
-    background: linear-gradient( to bottom, $color-primary-0, transparent );
-    //background: linear-gradient( to bottom, red, transparent );
-    border-bottom-left-radius:200px;
-    border-bottom-right-radius:200px;
-    width: 100%;
-
+    background: linear-gradient( to bottom,white, transparent );
+    width: 100vw;
+    height: 100vh;
+    /*position:fixed;*/
     @include element('title') {
         color: black;
+        width: 100%;
     }
 
     @include element('img') {
-        > div {
-            background-image: url(./img/three.png);
-            height: 200px;
-            background-size: 20%;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
+        width: 100%;
+        height: 80%;
+        background-image: url(./img/three.png);
+        background-size: 50% auto;
+        background-repeat: no-repeat;
+        background-attachment:fixed;
+        background-position-x: 50%;
+        background-position-y: 0%;
     }
 }
 
 .section {
-    h1 {
-        font-size: 5.9vw;
-    }
-
-    h2 {
-        font-size: 3.0vh;
-    }
-
-    p {
-        font-size: 2vmin;
-    }
 
     @include element('info') {
         color: $color-primary-3;
@@ -92,7 +94,8 @@ $color-secondary-2-4: #334F00;
         @include element('input') {
 
             input[type="radio"] {
-                display:none;
+                display: none;
+
                 &:checked {
                     + label {
                         span::after {
@@ -102,6 +105,7 @@ $color-secondary-2-4: #334F00;
                     }
                 }
             }
+
             label {
                 position: relative;
 
@@ -118,7 +122,7 @@ $color-secondary-2-4: #334F00;
                         left: -52px;
                         width: 45px;
                         height: 25px;
-                        background-color:green;
+                        background-color: green;
                         border-radius: 50px;
                     }
 

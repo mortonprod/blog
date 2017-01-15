@@ -1,6 +1,9 @@
 ﻿'use strict';
 var webpack = require('webpack');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
+//if (process.env.NODE_ENV === "production") {
+//} else {
+//}
 var config = {
     entry: {
         index: ['./src/client/index.ts'],
@@ -9,6 +12,7 @@ var config = {
     ],
     output: {
         path: "./dist/assets/bundle",
+        publicPath:"/bundle/",
         filename: '[name].js',
         libraryTarget: 'umd' // Need this for static site generation.
     },

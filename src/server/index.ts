@@ -8,7 +8,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 console.log(path.join(__dirname, "./assets"))
 app.get('/', function (req: express.Request, res: express.Response, next:any) {
     //Send file not connected to express.
-    res.sendFile(path.join(__dirname, './assets','views', 'intro.html'));
+    res.sendFile(path.join(__dirname, './assets','views', 'index.html'));
     //next();
 });
 app.post('/choice', function (req: express.Request, res: express.Response) {
@@ -23,7 +23,11 @@ app.post('/choice', function (req: express.Request, res: express.Response) {
 
         // Write the modified obj to the file
         jsonfile.writeFile(path.join(__dirname, './assets', 'options.json'), fileObj, function (err:any) {
-            if (err) throw err;
+            if (err) {
+                throw err;
+            } else {
+                res.redirect('/');
+            }
         });
     });
 });

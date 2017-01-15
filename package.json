@@ -7,9 +7,8 @@
   "homepage": "https://github.com/mortonprod/blog",
   "scripts": {
     "start": "set NODE_ENV=production&& node ./dist/index.js",
-    "build:server": "set NODE_ENV=production&&gulp",
-    "start:tests": "tsc -p ./src/client/__tests__&&jest ./src/client/__tests__/index.spec.js",
-    "start:dev": "tsc -p ./src/server&&set NODE_ENV=development&&node dist/index.js"
+    "build": "set NODE_ENV=production&&gulp",
+    "start:dev": "webpack-dev-server --inline --hot --content-base ./dist/assets/views"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
@@ -49,7 +48,7 @@
     "url": "^0.11.0",
     "url-loader": "^0.5.7",
     "webpack": "^1.13.2",
-    "webpack-dev-server": "^1.14.1"
+    "webpack-dev-server": "^1.16.2"
   },
   "repository": {
     "type": "git",
