@@ -1,5 +1,6 @@
 ﻿'use strict';
 var webpack = require('webpack');
+var autoprefixer = require('autoprefixer');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 //if (process.env.NODE_ENV === "production") {
 //} else {
@@ -39,6 +40,12 @@ var config = {
                 }
             }
         ]
+    },
+    postcss: function () {
+        return [autoprefixer(
+            //    { browsers: ['ie 10', 'firefox 20', 'safari 9.1','Chrome ] }
+            { browsers: ['> 0%'] }
+        )];
     }
 };
 

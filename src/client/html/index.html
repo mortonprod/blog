@@ -3,83 +3,114 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Introduction to web development blog </title>
-    <link href="https://fonts.googleapis.com/css?family=Bungee+Shade|Oswald|Raleway" rel="stylesheet">
+    <title> Reorder </title>
+    <link href="https://fonts.googleapis.com/css?family=Indie+Flower|Kumar+One|Lobster|Oswald|Overpass+Mono|Pacifico|Roboto" rel="stylesheet">
     <script src="bundle/index.js"></script>
 </head>
 <body class="body">
-    <header class="header">
-        <div class="header__title">
+    <!--Load this first and then remove after we have everything running-->
+    <div id="load" class="load">
+        <div class="load__container">
+            <div class="load__container__ball load__container__ball--blue"></div>
+        </div>
+        <div class="load__container">
+            <div class="load__container__ball load__container__ball--red"></div>
+        </div>
+        <div class="load__container load__container--footer">
+            <h1>Waiting</h1>
+        </div>
+    </div>
+    <div class="fixed background" data-speed="0.1" data-start="0" data-end="1000" data-type="top"></div>
+    <div class="fixed picture" data-speed="0.2" data-start="0" data-end="1000" data-type="top">
+        <h1 class="picture__title">The power of three</h1>
+        <svg class="picture__svg" viewBox="0 0 100 100">
+            <polygon points="0,0 100,0 50,100" />
+        </svg>
+        <div class="picture__img">
+            <div></div>
+        </div>
+    </div>
+    <div id="splash" class="splash">
+        <div class="splash__drawing">
+            <canvas id="canvas" class="splash__drawing__canvas" />
+        </div>
+    </div>
+    <div class="layer">
+        <header class="layer__header">
             <h1>
-                The trial and tribulations of a web developer
+                Reorder
             </h1>
-        </div>
-        <div class="header__img">
-        </div>
-    </header>
-    <div class="container">
-        <section class="section">
-            <div class="section__info">
+            <p>
+                Ordering user content with blocks
+            </p>
+        </header>
+        <section class="layer__section">
+            <article class="layer__section__introduction">
                 <h2>
-                    <span class="glyphicon glyphicon-user"></span>About the author
+                    What we want to build
                 </h2>
                 <p>
-                    Hello I'm mortonprod, a physicist turned web developer.
-                    Scott Hanselman told me I had to be a full stack developer so that's what I did!
-                    Front to back with a little bit of command line usage.
-                    I'm here to entertain you with the struggles of the transition.
+                    A bunch of dynamic blocks which will expose information to the user.
+                    We need to consider responsive design and dynamically loaded content.
+                    Use basic BEM methodology written in sass.
+                    Typescript is used which is compiled to JS.
+                    HTML5 semantic elements used throughout.
+                    The delivery of the page is optimised for speed when possible.
                 </p>
-                <h2>
-                    Why would you want to read this?
-                </h2>
-                <p>
-                    Well, you might learn something and who isn't entertained reading about other peoples struggles.
-                </p>
-            </div>
-            <div class="section__need">
-                <h2>
-                    What I need from you.
-                </h2>
-                <p>
-                    Now before we begin I would like a little bit of input from you guys.
-                    Below you will find a list of the topics I have varying levels of experience in.
-                    I want to know what you would like to read about.
-                </p>
-                <form method="post" action="choice">
-                    <div class="section__need__input">
-                        <input name="subject" type="radio" value="option1" id="option1" />
-                        <label for="option1">
-                            <span>
-                                An introduction to webpack and gulp
-                            </span>
-                        </label>
-                    </div>
-                    <div class="section__need__input">
-                        <input name="subject" type="radio" value="option2" id="option2" />
-                        <label for="option2">
-                            <span>
-                                Boom
-                            </span>
-                        </label>
-                    </div>
+            </article>
+            <article class="layer__section__container">
+                <div class="layer__section__container__item layer__section__container__item--scale2">test</div>
+                <div class="layer__section__container__item">test</div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
+                <div class="layer__section__container__item"></div>
 
-                    <div class="section__need__submit">
-                        <input type="submit" name="submit">
-                        <span class="glyphicon glyphicon-cloud-upload"></span>
-                    </div>
-                </form>
-            </div>
-            <div class="section__disclaimer">
-                <h2>
-                    Disclaimer
-                </h2>
-                <p>
-                    I will focus on topics I am comfortable with but not an expert.
-                    This means I might make the odd mistake.
-                    However, I promise on Dan Abramov's future grave that I will be upfront with you at all times.
-                </p>
-            </div>
+            </article>
+            <article class="layer__section__row">
+                <div class="layer__section__row__item layer__section__row__item--scale2">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+                <div class="layer__section__row__item">test</div>
+            </article>
+            <!--Layer will only scroll until the bottom of the page can be seen.-->
+            <article class="layer__section__col">
+            </article>
+
         </section>
+        <footer class="footer">
+            <p>Create by mortonprod</p>
+            <p>
+                Contact information:
+                <a href="mailto:mortonprod@gmail.com">
+                    mortonprod@gmail.com
+                </a>.
+            </p>
+        </footer>
     </div>
 </body>
 </html>
