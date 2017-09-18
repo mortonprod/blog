@@ -7,7 +7,7 @@
   "homepage": "https://github.com/mortonprod/blog",
   "scripts": {
     "start": "set NODE_ENV=production&& node ./dist/index.js",
-    "build": "set NODE_ENV=production&&gulp",
+    "build": "set NODE_ENV=production&&gulp build",
     "start:dev": "webpack-dev-server --inline --hot --content-base ./dist/assets/views"
   },
   "dependencies": {
