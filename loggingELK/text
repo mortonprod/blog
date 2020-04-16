@@ -1,0 +1,72 @@
+Logging with an AWS Managed Elasticsearch Cluster
+A quick introduction to setting up AWS managed elasticsearch, kibana, cognito and cloudwatch subscription filters
+Alexander Morton
+Alexander Morton
+Sep 22, 2019 · 6 min read
+
+
+
+Introduction
+
+Overview of some of the places you will receive logs in AWS directed at an ES cluster. ©JasonPoley
+Logging and monitoring your infrastructure sounds easier than it is.
+The first issue is all the different services you will need to pay attention to. The diagram above only covers some AWS services, you will usually be using other external services like databases outside of your AWS infrastructure as well.
+The next issue is for each component you will need to consider how you get you data securely to elasticsearch or whatever stash your are using.
+Lastly, all your logs will need some processing since some of the components will inherently produce different formats even if your applications use a consistent format. This can be done with logstash, a lambda or some other tool. Logstash is powerful but the majority of of our logs will come from cloudwatch logs so we can use a simple lambda subscription to securely collect, format and then send them to our stash.
+With these setup we can create new cloudwatch groups and streams for any component inside or outside AWS and forward our logs to it. Of course you don’t need to go down this route since any pipelines to ES would suffice. It just makes life easier to have a single entry point for the majority of our logs.
+Elasticsearch (ES)
+Why use ES anyway?
+You will always need a central place to aggregate logs from all areas of you infrastructure. That is if you want to fully automate your components. You don’t want devs jumping between database logs, cloud metrics and application logs to try and get a picture of what went wrong. You want a single store of truth which unifies all logs from all systems. This is a lot of work but you don’t have to do it all at once. Pick the logs you really need and write the lambda business logic for it. If you suddenly need more info, say from mongodb then
+Forward mongodb logs to cloudwatch group
+Update subscription lambda to deal with new format of logs
+You can repeat this for any system adding more and more information about your infrastructure to your stash. You can, of course, forward your logs directly to ES but we found it easier to have a single point of contact for all logs when possible.
+Elasticsearch was chosen since it is one of the best and most widely used search engines. Other tools and services are available like papertrail or logly but you will need to play with each one since they all have different use cases and costs. In particular the AWS managed cluster was chosen for ease of setup. You can also setup the cluster yourself on EC2 instances but this in most cases is not needed. Additionally you can pay elastic rather than AWS to setup you cluster.
+In nearly all cases you will want to have kibana running with ES. Kibana is a frontend for ES. You can manipulate your data easily with many premade tools without have to write searches and then plot the results.
+
+https://giphy.com/gifs/dumb-dummy-i-feel-XeLcgh8gT8o0F5SQ8i?utm_source=iframe&utm_medium=embed&utm_campaign=Embeds&utm_term=https%3A%2F%2Fcdn.embedly.com%2Fwidgets%2Fmedia.html%3Fsrc%3Dhttps%3A%2F%2Fgiphy.com%2Fembed%2FXeLcgh8gT8o0F5SQ8i%2Ftwitter%2Fiframe&%3Burl=https%3A%2F%2Fgiphy.com%2Fgifs%2Fdumb-dummy-i-feel-XeLcgh8gT8o0F5SQ8i&%3Bimage=https%3A%2F%2Fmedia.giphy.com%2Fmedia%2FXeLcgh8gT8o0F5SQ8i%2Fgiphy.gif&%3Bkey=a19fcc184b9711e1b4764040d3dc5c07&%3Btype=text%2Fhtml&%3Bschema=giphy
+
+In the end, anything has to be better than cloudwatch so pick the best thing for you.
+Creating the Resources
+Terraform was used to describe the full setup.
+AWS Managed ElasticSearch
+The managed ES cluster secures its search endpoint using an access policy which dictates what roles can access what ES indices. Your EC2 instance must be greater than or equal to 3 so ES can split the shards between multiple elastic blocks attached to each EC2 instance.
+Snapshots are taken every 23 hours to backup your data.
+
+Note: We ignore the cognito options. This is done since we allow ES to create the cognito client for us which means it is out of terraforms state. We could try to import this state afterwards but it’s not worth the effort.
+Cognito
+Cognito secures Kibana using an OAuth authorization code grant. This works with the access policy using the following process:
+Kibana will direct to the cognito userpool when you visit the page
+You will login and get an auth code which you exchange for an access token using the authorization code grant flow
+Kibana forwards access token onto identity pool
+The identity pool validates the token, checks the groups listed in the token and associates the role from the group with the highest precedence to it
+If the role matches the principle in the ES access policy then you can login.
+We need to create all of this for it to work so we next create the roles, user pool and identity pool. We then attach the roles to a particular user pool group.
+As mentioned above, you must configure the identity pool to use the role specified with the user pool group over its own authenticated role.
+Note: This is not specified in terraform and must be done using the AWS console. I have to check if this is possible but my setup does not change state on each apply so this is not to much of a concern right now.
+
+Subscription Lambda
+The subscription lambda is the last part to this. Another option is to use a kinesis stream to ES rather than a subscription. If your setup starts with large throughput this might be the better option. We did not need this right away so kinesis was left for future development.
+The lambda needs the correct execution role to run. We then deploy it, ready for us to subscribe this to every cloudwatch group in all regions.
+
+The lambda itself is a pretty easy build and will depending on exactly what you need. In our case we had to also build a slack integration which notifies a when an error has occurred. Assuming all you want to do is forward logs to ES then you only need to consider the format of the ES log and secure the request. Below you can see an example of this.
+
+Note: You need to package the AWS id and secret into the headers. This was a surprise to me since I assumed AWS would deal with this process like many other services but I could not get this to work without it. There are full examples of this online which I used so you should be able to find more information if need be.
+Lambda Subscription Tool
+The lambda must be subscribed to all the cloudwatch groups in all regions. This makes using terraform to orchestrate the subscription problematic since we should have to initialise a new provider for each region. Furthermore, terraform loses track of state in arrays if the array is reordered. This will cause the subscription to be renewed for many groups which already has one.
+Therefore it was easier to keep the subscription part outside of terraform using a simple build tool which we run every-time we create a new cloudwatch group.
+
+This might seem over kill since the majority of your resources will be in a single region but this is not always the case. As an example: If you are using cloudfront and edge lambdas then you can’t be sure where the request will be processed so you may have logs in many different regions.
+Maintainance
+There are a few things you will need to do regularly:
+Cron job to remove old indices and data if no longer required
+Need fix/remove old visualise with old indices
+Need to rerun build tool anytime we add a new log group
+This is a small list compared to what we would have to do to maintain our own cluster. ES updates are also managed by AWS with very little downtime.
+Conclusion
+With all of this completed, we can now start to produce visuals of all inputs we have provided. We run our search and get kibana to output the results. Below you can see two simple examples.
+
+This is the number of log streams from each app
+One of the most impressive thing you get out of the box, if you timestamp your data correctly, is time dependent graphs. This allows you to quickly understand how your applications and infrastructure are performing throughout the day.
+
+This is the number of logs from each app vs time
+There is much more you can do with this tool which I do not cover. I hope this quick guide is of use to yourself and quite possibly my future self.

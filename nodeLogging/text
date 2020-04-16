@@ -1,0 +1,59 @@
+NodeJS Logging
+Logging for production nodeJS applications
+Alexander Morton
+Alexander Morton
+Sep 22, 2019 · 5 min read
+
+
+
+
+Collecting some logs is easier than others…
+Introduction
+This post focuses on logging for node applications within a micro-services architecture. Correlation of logs using request ids from API Gateway (APIGW) and an Application Load Balancer (ALB) is highlighted. These apps are managed containers or lambdas.
+If you are looking for more information on amalgamation of data, analysis, visualisation or storage then check our my elasticsearch post which follows loosely on from this.
+Creating Logs
+First you will need to create a cloudwatch group. Some services will do this but need the correct permissions specified by an IAM role. The role should also allow for you to create streams within that group. Try to limit the permission your application have. Try to only give them access to things they actually need. Reduces the attack area of your infrastructure.
+Most services create their own cloudwatch group and stream name format, specifying the app name and instance id.
+Note: You can change this format but you need to be consistent. Otherwise you will have a nightmare combining these logs for analysis later.
+Continuation Local Storage
+
+Diagram showing how global variables (signified with thread ids) can be changed between function invocations © datahero.com
+NodeJS has many idiosyncrasies. One serious problem you will have is monitoring your applications at the request level. This is not even an issue with a micro-services architecture and tracing between apps. It’s a fundamental problem even with a single application. It stems from the fact that node does not create a new thread for each request which means we can’t tag it.
+The diagram above highlights this. A function can run and set a globally available variable. When complete it passes control to the event loop. At this stage we have no idea what will run next. We could receive a new request which changes the global id. Finally the event loop runs function 2, with possibly a different request id. Ahhh!
+How do we fix this?
+We have two options: closure or passing the id as an argument.
+Both methods will require you to refactor much of your code. You will need to reposition the declaration of your functions or add an id as an argument to each one. This is messy and error prone. The issue is passing context to every function which calls a function.
+This is where continuation local storage (CLS) comes in. It simulates thread storage by implicitly passing context to every callback. This is done using an experimental feature known as async_hooks which, if I really simplify it, is a function which is called before each callback. This function updates the callbacks arguments with the correct context.
+API Gateway and ALB Request Headers
+Even if we can get the id into our logs what id should be use?
+Many AWS services will create a request id for you. APIGW does this by default and ALB can be configured to do so. It is better to use these request ids since AWS will use this same tag to correlate their own request information. Otherwise you would have to generate your own id and then find what AWS id corresponds to your own.
+Applications
+Your own project will have its own application types. To give an overview of some of our apps I have listed some situations below:
+HTTP Express server container
+SQS/RabbitMQ container listener
+SQS lambda listener
+SFTP Server
+As you can see we have a few different situations. This makes finding a common solution for all difficult. Take containers vs lambdas: We need CLS for all containers but not for lambda since each lambda invocation deals with a single request. Additionally, we could use CLS express tool but this would not work for SQS listeners or SFTP server.
+Solution
+Below you will find our solution for implementing CLS. It uses the cls-hooked library which is used by many enterprise tools, one example being the tracing tool x-ray.
+Note: CLS has a bug/feature which is it will not pass context to every function. This is done since you probably don’t want to pass context to function calls like database connection pools. So you need to update CLS to work for all the tools you currently use. In most cases this is very easy but sometimes it can be a pain since you need to keep track of what tools developers are using so you don’t lose your request id. Other tools use a plugin model but I could not find anything similar for cls-hooked.
+You can see we place in shimmers so context is passed correctly between mongoose calls.
+The module looks for headers which will specify the request id. We don’t know if we will be attached to a ALB or APIGW so we look for both at all times. We also have an express specific tool and a general one. This is so we can use this tool for express and other application types.
+
+CLS creates a new logger and info object per request which also contains the request id. You can access this info object the same way you access the logger. Moreover, you can use this info object to store other information which you want at the request level such as user info, transaction ids etc.
+The more you research it CLS becomes a very useful tool.
+How to use it
+An example use case is the express server below. You need to include it as middleware so each request initialises the logger and info object.
+
+If you need to use this with anything other than an express server then the middleware will return a standard CLS storage object. Like any use of CLS you need to wrap all your code within a callback so it passes the correct context.
+We needed to include mongoose to fully test the CLS behaviour. If your applications have any other database or tool running then you will need to include that in your tests. You could rely on the CLS tool you are using to just work but that is a risk you take.
+Finally, you way wonder why we specify
+cls.logger.info()
+and not
+let logger = cls.logger
+logger.info()
+Well the first once will work and the second one will not.
+Under the hood the module is a proxy so when you reassign it you are going back to having a single static logger. Do not do this even if it does look a bit weird!
+Conclusion
+With this setup you can have logs with request ids. Perfect! However, cloudwatch is not really capable of detailed searches and visualisations so you will need to export those logs into something more advanced.
+Good Luck!

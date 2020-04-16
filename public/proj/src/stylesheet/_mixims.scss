@@ -1,7 +1,0 @@
-﻿///Functions to construct quick changes to styles.
-@mixin abs-pos($left:0,$top:0,$width:100%,$height:auto) { 
-    left:$left;
-    top:$top;
-    width:$width;
-    height:$height;
-}
