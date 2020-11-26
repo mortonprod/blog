@@ -1,0 +1,241 @@
+Playing with TensorFlow
+A quick literature review and example MNIST fits
+Alexander Morton
+Alexander Morton
+Just now·14 min read
+
+
+
+Introduction
+I’ve wanted to learn more about neural nets and in particular TensorFlow for a while now. I recently had a bit more time to dedicate to it, so began to write about what I had learned and some of the basic examples I had ran through.
+Even though this information has been covered before, I decided to post it since it could help other beginners like myself. I’ve focused on parts which I thought were essential; hopefully making the subject matter as clear as possible without losing substance.
+Concepts
+The usual picture of a neural net as a bunch of nodes connect by lines can make the subject matter appear somewhat esoteric.
+Image for post
+An example of a multiple layer fully connected neural network. Rights: source
+Then you realise that the picture you have in your head does not touch the surface of neural nets used in the wild; further adding to the mystery.
+Image for post
+Some examples of more elaborate neural networks. Rights: source
+This impression is compounded when you realise the subject is a mixture of computer science, mathematics, statistics and neurology; which are already difficult subjects in their own right. All this can seem overwhelming but when you break the concepts into parts it starts to make sense.
+Objective and Approximation
+To start breaking this down lets focus on two concepts which I thought cut through the noise:
+A neural net, no matter the complexity, is nothing more than a very complex function.
+We approximate this very complex function using multiple simple non linear functions in combination.
+The objective of training a neural net is to find a very complex function which maps one set to another; the set and mapping completely depend on the problem you are trying to solve. Sets have a long history in mathematics which I could spend this whole article getting into. Rather than getting into that, you should see it as nothing more than mapping a series of numbers to another series of numbers. This might seem strange at first; however, it is not strange when you realise that everything can be represented by numbers: an image is nothing more than a series of numbers representing pixels; sentences can be represented by numbers, with each word being a number or a vector of numbers depending on how you want to display the information. All problems can be represented, in someway, by numbers.
+We approximate this complex function by combining lots of non linear functions. The ability to approximate almost any function as a combination of non linear functions is known as the universal approximation theorem. For anyone familiar with Taylor or Fourier series this will make some sense; sometimes it is easier to break a function into parts with each part approximating the original function.
+So we have the objective of finding a complex function which we will approximate using multiple non linear functions.
+Activation Functions
+These non linear functions are known as activation functions.
+Image for post
+Structure of a single node. Rights: source
+Above you can see three types of parameters
+Inputs (X).
+Weights (W).
+Bias (B).
+The inputs are from the data or from the previous layer. The weights and biases are what does the “learning”: the parameters we will change to produce our complex function which will solve our problem.
+There are many different functions which can take these weights and biases as input.
+Image for post
+Examples of activation functions. Rights: source
+There are advantages and disadvantages to each function but before understanding that we need to understand how we will learn the correct weights and biases.
+Loss Function
+The term “learning” is a really abstract term which completely misses the point of what you are doing. When you “learn” you are setting up all the weights and biases with the correct values to map inputs to as close as possible to the known outputs. The accuracy between the calculated outputs and the known outputs, which we know in supervised learning, is measured using a loss function.
+The best known loss function is quadratic loss which is used in least squares fitting. With this loss it is clear you are trying to get your fitting function as close to the data points as possible. However, more elaborate functions might be more difficult to visualise.
+Image for post
+Example of two parameters and the loss for each value. Rights: source
+Above you can see an example of a loss function for two parameters. This image is incredible useful; however, you need need to keep a few things in mind when your models get more complex.
+Increase the number of dimensions for each weight and bias parameter.
+Understand that the node types (activation functions) and how you connect them change the shape of the loss landscape.
+The shape of the landscape is not known to you.
+The last point is important. The diagram above makes you think that you could easily find the smallest value of the loss function; however, you need to find this iteratively.
+Keeping this point in mind, we then need find a method for descending the unknown loss landscape. This method follows a set procedure.
+Initialise weights.
+Propagate inputs through weights to get value of output.
+Find value of loss function.
+Back propagate the weights trying to minimise the loss.
+Repeat.
+The first three parts are quite obvious to follow. The fourth part, back propagation, is the part you need to go through in a bit more detail. To get a feel for how this is done there is a good tutorial which I followed and then surmised below.
+Back Propagation
+Back propagation is using input data to iteratively update the weights. The process starts from the output layer and works backwards. To demonstrate this we will use an example activation and loss function.
+First lets define a few terms
+Image for post
+We are using a quadratic loss function and sigmoid function as the activation; this would change depending on the problem.
+Now we have defined our terms we can write down the update function which will change the weights iteratively:
+Image for post
+The first line is the update equation. The next line is a breakdown of the the partial differential.
+The first term of the update equation is the change of weights due to change in loss and the second is the momentum term. The only term we need to calculate is the change of weights due to change in loss. The momentum is simply the change due to the last iteration; this term is added to avoid local minimums.
+Now we have the update rule, and have broken it into parts using chain rule, we need to work out the functions for each part. One of the terms is the partial derivative of the activation, the sigmoid function, relative to the inputs.
+Image for post
+Differentiation by substitution is used to determine how the activation changes relative to its inputs.
+Other terms, which are easier to determine, are the change in inputs relative to weights and the previous layer’s activations:
+Image for post
+Finally, we put all these partial derivative together and determine how the loss changes relative to the weights.
+Image for post
+Now we need to find how the loss changes with activation.
+Image for post
+The first equation is how the gradient of the quadratic loss changes with the data and activation for the output layer. The second equation specifies how the loss change for each layer using the result from the layer above.
+Using all of this we can move back, layer after layer, determining how the weights should change. Let’s now use what we have learned to understand some typical examples.
+Fully Connected Network
+Using the concepts above we can begin our example fits starting with a fully connected network. Each of the examples uses the same docker image to create the required environment to run TensorFlow. I start this container with my code mounted from my local machine and allow TensorBoard to run from port 6006.
+docker run -p 6006:6006 -v `pwd`:/mnt/ml-mnist-examples -it tensorflow/tensorflow  bash
+Now we have the environment we need to consider the dataset we will be playing with. The dataset I used to learn was MNIST: 60,000 small square 28×28 pixel grayscale images of handwritten single digits between 0 and 9.
+The code I used was the same as the tutorial which you can find online.
+
+When I first seen this I was perplexed. Even with the basic reading I had done I had to understand what the code was doing. So I went through it step by step.
+The data is loaded from the normal training set. The input is an array 28x28 with each point having a number from 0 to 255. This is why we divide by 255 so each entry is between 0 and 1.
+(x_train, y_train),(x_test, y_test) = mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+Looking at the structure of the inputs we can see it is a large 3D matrix.
+xtrain[entry][x_pos][y_pos]
+entry going up to 60,000
+x_pos/y_pos going up to 27 in each direction
+The output is nothing but a one dimensional vector specifying the value of the digit between 0 and 9.
+y_train[entry]
+entry going up to 60,000
+Now we get to the setup of the neural network. The first layer is the input layer which is the same as the input image.
+tf.keras.layers.Flatten(input_shape=(28, 28))
+Next we have the hidden layer using the Relu activation function.
+tf.keras.layers.Dense(512, activation='relu')
+The documentation describes this part quite well:
+Dense implements the operation: output = activation(dot(input, kernel) + bias) where activation is the element-wise activation function passed as the activation argument, kernel is a weights matrix created by the layer, and bias is a bias vector created by the layer (only applicable if use_bias is True).
+So we are linking all the input pixels to 512 hidden layer nodes which will begin to workout features of the digits.
+Dropout, which is used in this network, helps alleviate the problem of overfitting. Basically it sets the activations of some output nodes to zero during training. This is done to ensure the net is generalising and not just “remembering” the input data. Let’s set 20% of the nodes to 0 each cycle.
+tf.keras.layers.Dropout(0.2)
+Finally, we get to the output layer which uses a softmax activation function which is used for multi classification problems. This is done since all the outputs should be probabilities which sum to 100%.
+tf.keras.layers.Dense(10, activation='softmax')
+Looking at the model summary we can see all the parameters we need to train.
+Image for post
+Model summary for fully connected network.
+To really understand what is going on we need to know where these ~407k parameters come from.
+Flatten takes a 2D matrix and creates a 1D output, giving 28x28=784 pixels.
+First dense layer is 512 nodes. A weight per 784 pixels which is connected to the nodes and a bias per node. Giving a total=512x784+512=401920.
+Dropout is the same number of nodes in the layer below with no parameters to change.
+Second dense layer is a weight per connection to node plus bias per node. Giving a total=512x10+10=5130.
+Total=401920+5130=407050.
+Now we have the full network we want to do the iterative fit.
+model.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])
+Adam optimiser is just a form of stochastic gradient descent which specifies how we should move down the loss function. This particular loss function is used for categorisation.
+Now specify how we want to store the output for TensorBoard which we will use later.
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+Finally, we can run through the full dataset 5 times or epochs:
+model.fit(x=x_train,y=y_train,epochs=5,validation_data=(x_test, y_test),callbacks=[tensorboard_callback])
+We should have output generated and stored in logs directory. We can then look at that data using TensorBoard:
+tensorboard --logdir logs --host 0.0.0.0
+Results from TensorBoard
+Image for post
+Image for post
+Loss and accuracy for training (Orange) and validation (Blue).
+Image for post
+The weights and bias for the first dense layer for each epoch.
+Image for post
+The weights and bias for the second dense layer for each epoch.
+Recurrent Neural Network
+I decided to then move on to use a recurrent neural network (RNN) to fit the same data. The network is not ideal for this sort of problem since they are designed for sequential data.
+
+This time we are reading the image data in row by row, with the network “remembering” details about the line above. This is, of course, not how you look at an image but in principle you could work out an image this way.
+Looking at the network you can see it as relatively simple: a RNN layer, normalisation and then the output.
+rnn_layer,
+keras.layers.BatchNormalization(),
+keras.layers.Dense(output_size),
+This network has far fewer parameters than the fully connected example which you can see by looking at the model summary.
+Image for post
+Model summary of RNN
+Repeating what we did before, let’s try to understand all these parameters.
+Weights for the connection between inputs and the previous RNN cell: so we have 64x64 (which is the weights linking RNN cell to the previous RNN cell), then 64x28 (which is the weights linking each RNN node to 28 pixel input), finally the biases for each node which is 64. Giving a total=64x64+64x28+64=5,952.
+We have four parameters per output node of RNN for batch normalisation: two parameters for shift and scaling; two parameters for moving average and variance. Giving a total=4x64=256.
+Dense layer parameters will be weights which are 64x10 plus biases for each node which sum to 10. Giving a total=64x10+10=650.
+Total=5952+256+650=6858.
+Results from TensorBoard
+Image for post
+Image for post
+Loss and accuracy for training (Orange) and validation (Blue).
+Image for post
+The weight and biases for the RNN layer.
+Image for post
+A look at the batch layer parameters.
+Long Short-Term Memory
+Let’s now look at a more complex RNN network known as Long Short-Term Memory (LSTM). The LSTM should allow us to “remember” important information we consumed many time steps before.
+
+We still don’t have as many parameter as we did for the fully connected network, but the structure of these connections is what is important with LSTM.
+Image for post
+Model summary LSTM
+Breaking down all the parameters from the model summary.
+LSTM has the weights and biases for forget, information, candidate and output layers. Each one will need a weight for each input and hidden layer output from the last iteration. Input is 28 pixels and we specify 64 as output for LSTM, so we will have 64x64(weights)+64x28(weights)+64 (biases)=5,952. We have 4 different layers in LSTM so 5,952x4=23,808.
+We have four parameters per output node for batch normalisation: two parameters for shift and scaling; two parameters for moving average and variance. Giving a total=4x64=256.
+Dense layer will have 64x10(weights)+10(biases). Giving a total=64x10+10=650.
+Total=650+256+23808=24714
+Results from TensorBoard
+Image for post
+Image for post
+Loss and accuracy for training (Orange) and validation (Blue).
+Image for post
+Batch normalisation layer.
+Image for post
+All the weights and biases for LSTM layer.
+Image for post
+Weights and biases for output layer
+Convolutional Network
+Fitting with a convolutional network should give the best results as it take into account the 2D nature of the problem.
+
+This fit requires us to restructure the input data as described in this question; basically, we will need to add a dimension to the input. So rather than using a single pixel grey scale we need to assume is has a multiple RGB numbers. Starting with grey scale input we had before
+x_train[image_num][x][y] 
+we need to change to have the structure
+x_train[image_num][x][y][0]
+The last 0 is due to the assumption that we could be looking at colour photo which would have 3 entries.
+x_train[image_num][x][y][0]=blue
+x_train[image_num][x][y][1]=green 
+etc…
+Image for post
+Model summary of convolutional network.
+Let’s look at the 2D convolution to understand the number of weights.
+model.add(layers.Conv2D(32, (3, 3), use_bias=True, padding="SAME", activation='relu', input_shape=(28, 28, 1)))
+The 3x3 grid is the size of a single filter, each filter has weights for each cell and bias so 3x3+1=10. We then repeat this for each filter so (9 weights + 1 bias)x32 filters=320.
+This is for an input of 28x28x1 which is grey scale, if we had used RGB which is 28x28x3 then we would need weights for each one but with a shared bias since it’s all combined into a single feature.
+So the weights and biases for each filter will change to find what filters best find the input digits. So one filter might find an arc for the number 8 or a roughly 30 degree angle for the number 7.
+The size of the image does not change the number of parameters, each stride is using the same weights and bias as before. However, the depth of the input does, so we need different weights for each RGB colour but not a different bias.
+The output shape could be confusing; we have a node for each filter at each pixel stride. Note, 3x3 does not fit into 28x28 this is why we have specified
+padding=”SAME” 
+So we pad in the input so 3x3 can centre on each pixel. We now have an output which lines up when a particular feature is at a particular location.
+Max pooling is easier to understand and will run over the output of the convolution and output the maximum of the 2x2 filter it is over.
+model.add(layers.MaxPooling2D((2, 2)))
+Now we want to run a convolution over the max polling input. This will combine the features found in the earlier convolution layer to create higher order features; so curves might become circles, or angles might become multiple angles.
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+The number of parameter will be 3x3 weights per filter giving a total of 9. With 64 filters times 9 weights per filter we get 576 weights. Now we have all these weights per layer which was outputted by the max pool which was 32, so 32x576=18,432. Now we add the bias of all the filters which is 64 so 18,432+64=18,496.
+Note, the output is smaller since we don’t have padding set on this layer.
+Running max pooling again
+model.add(layers.MaxPooling2D((2, 2)))
+then the last convolution
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+This will have 9 weights for each filter giving 64x9=576. We need these weights for each layer of the pooled layer below giving 576x64=36,864. Now we add the biases for each filter 36,864+64=36,928.
+We then flatten the 2D structure to 1D.
+model.add(layers.Flatten())
+Then we have 1D dense layer with 64 nodes.
+model.add(layers.Dense(64, activation='relu'))
+This will have weight for each input connect to the 64 nodes giving 1024x64 (weights)+64(bias)=65,600.
+Finally we get to the output layer.
+model.add(layers.Dense(10, activation='softmax'))
+This will be a weight per input to the 10 nodes and a bias per node giving 64x10+10=650
+Putting this all together we get
+Conv2D: 320.
+Conv2D_1: 18496.
+Conv2D_2: 36928.
+Dense: 65600.
+Dense_1: 650.
+Total=320+18496+36928+65600+650=121994.
+Results from TensorBoard
+Image for post
+Image for post
+Loss and accuracy for training (Orange) and validation (Blue)
+Image for post
+Weights and bias from first convolutional layer
+Image for post
+Weights and bias from second convolutional layer
+Image for post
+Weights and bias from third convolutional layer
+Image for post
+Weights and bias from first dense layer
+Image for post
+Weights and bias from second dense layer
+Conclusion
+The basic information provided was good enough for me to get start so hopefully will be useful to you. There are a few things I don’t cover but nothing a quick google will not provide the answer for.
+Comparing the different models we get roughly what we could expect with the convolutional network doing better than the rest. There could be improvements made to the others but since this was just a learning exercise there seemed no point.
