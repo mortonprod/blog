@@ -1,0 +1,157 @@
+Deploying a Static Website to S3 and CloudFront Using Github Actions
+An outline of how I automated the deployment of my personal site.
+Alexander Morton
+Alexander Morton
+Nov 11 · 12 min read
+
+
+
+
+
+Introduction
+A while back I set up a personal website for myself. It was left for a while and recently I made some improvements to it. As I was doing the improvements I decided to write up how it was built since there were certain aspects of the work I found interesting.
+There are similar stories out there like this one or this one. However, their setup is a bit different or does not go into some details I cover. Plus it never hurts to have additional resources when you are building something.
+When I first started, all I needed was some static assets which I could change on occasion, therefore, I did not need a server running all the time. I decided to deploy through AWS since I’m more familiar with this setup and it was relatively cheap. One of the improvements I made to it recently was using Github actions for deployments since I had to move code over to a new laptop.
+I do not claim this is the cheapest or best option. It was good enough for me given what I wanted and what I was most familiar with.
+AWS Resources
+Image for post
+Linking it all together. Right: source
+The full setup can be seen above going from the browser to the static assets with each part built using Github actions. The nice thing about this is we can replace each component with another none AWS service if required.
+Route53
+Image for post
+Welcome to Route53. Rights: source
+Amazon Route 53 is a highly available and scalable cloud Domain Name System (DNS) web service.
+Route53 is a nice service which integrates well with other AWS services. However, for a simple DNS service most of these are not needed. It is also expensive if you only use it for a small website; which I do. If you check out the cost below you have to pay 50 cents per month for a hosted zone; this is not a huge amount but if you use another solution you could get this for free.
+I originally had the domain registered in Namecheap but moved it over since I was working with a lot of stuff in AWS. Looking at the cost for what I get I’m regretting doing this. At this point though it would be more pain to move over and you never know what functionality you might need.
+With that said, Route53 has worked well for the majority of the projects I have worked on using some of the features mentioned below.
+VPC DNS routing
+Health Checking
+Geo Routing
+AWS Certificate Manager
+These features quickly pay for themselves for a site with any level of traffic.
+Cost:
+$0.50 per hosted zone
+$0.40 per million queries — first 1 Billion queries / month
+CloudFront
+Image for post
+CloudFront working with Lambda Edge. Rights: source
+Amazon CloudFront is a fast content delivery network (CDN) service that securely delivers data, videos, applications, and APIs to customers globally with low latency, high transfer speeds, all within a developer-friendly environment. CloudFront is integrated with AWS — both physical locations that are directly connected to the AWS global infrastructure, as well as other AWS services.
+When I first started working with CloudFront I was really impressed. It gave me so much control over my CDN and allowed me to distribute my website all over the world. Also the ability to use this as the first port of call for all sorts of AWS service easily was great: EC2, ELB, APIGW, S3…. Which are also free to fetch from with CloudFront and stays within the AWS network.
+Lambda@Edge allows you to use serverless computing power at the location you serve your content. They are incredibly useful for all sort of tasks; this can range from simple header manipulation, rerouting or complex authentication mechanisms for static assets. There are four CloudFront stages which can call Lambda@Edge
+Viewer Request
+Viewer Response
+Origin Request
+Origin Response
+As you can guess, viewer calls for each request to CloudFront, Origin calls for fetches to the static assets origin.
+Be careful with viewer calls since Lambda@Edge is more expensive than normal lambda functions and will be executed for all requests
+AWS Shield Standard comes at no additional cost which is great
+All AWS customers benefit from the automatic protections of AWS Shield Standard, at no additional charge. AWS Shield Standard defends against most common, frequently occurring network and transport layer DDoS attacks that target your web site or applications. When you use AWS Shield Standard with Amazon CloudFront and Amazon Route 53, you receive comprehensive availability protection against all known infrastructure (Layer 3 and 4) attacks.
+One issue using CloudFront for small projects is it can be a lot more expensive than other services like Cloudflare. I use AWS everyday so this did not put me off, since it would take me a day or so to set this up, rather than sitting learning how Cloudflare worked; plus I don’t have much traffic to really cost me a lot. However, if I was looking to optimise on a small to medium size website I would suggest not using it since the network costs could be more than you are making. This all depends on what you are doing in the end. Even a small website might need to have a bit more control over how the CDN works so CloudFront might be the only option you have.
+Cost:
+Regional data transfer out to internet for most expensive region (India) $0.170 per GB for under 10 TB.
+Regional Data Transfer Out to Origin for most expensive region (India) $0.160 (Free for AWS origin but still pay for what the origin charges)
+Request Pricing for All HTTP Methods $0.0220 per 10,000
+No additional charge for the first 1,000 paths requested for invalidation each month. Thereafter, $0.005 per path requested for invalidation.
+$0.60 per 1 million requests for lambda edge and $0.00001667 per GB-s for 128MB
+s3
+Image for post
+Welcome to S3. Right: source
+Amazon Simple Storage Service (Amazon S3) is an object storage service that offers industry-leading scalability, data availability, security, and performance.
+Storage in AWS can be confusing to the uninitiated. You will come across three options most of the time. In simple terms you should see it as such
+S3: Object storage
+EBS: Hard disk
+EFS: Network Storage
+You can of course combine EBS volumes to form your own network storage like Gluster. For simple static asset storage you should not even consider EBS or EFS, S3 is perfect for it. Additionally, S3 buckets and objects can be moved between different price classes depending on how often you access the data. For a simple website this is not even a consideration, but when moving to more complex problems like log storage, versioning etc it can be useful. Also access control is much easier to manage if you are already using AWS services. You can even setup VPC endpoints to ensure your data is only available within your private network.
+S3 is relatively cheap for what you get in return. In addition you do not pay for moving data between AWS services.
+Cost:
+$0.023 per GB for first 50TB in US-EAST
+PUT, COPY, POST, LIST requests (per 1,000 requests) $0.005
+GET, SELECT, and all other requests (per 1,000 requests) $0.0004
+Free for data transfer in
+Free for data transferred to cloudfront
+SES
+Image for post
+Setup to let people send messages from your website. Rights: source
+Amazon Simple Email Service (SES) is a cost-effective, flexible, and scalable email service that enables developers to send mail from within any application.
+SES is perfect for a simple contact form. There is a nice tutorial here demonstrating this which I followed for my site. I am no expert on the alternatives but since it is effectively free for what I need then it is a no brainer.
+The setup is also relatively simple with your email having to be verified before you can use that email address. After this you link your frontend code to send your message to APIGW which will trigger a lambda which will trigger SES to send an email.
+Cost:
+Since sending email from lambda: $0 for the first 62,000 emails you send each month, and $0.10 for every 1,000 emails you send after that.
+Setup
+All infrastructure described above was created using terraform. First we need to create CloudFront with Lambda@Edge and then the S3 bucket. Below you will see a gist for this setup. This lives as a separate reusable terraform module. The module is setup to allow different
+AWS Lambda@Edge Functions
+Static Assets (Depending on the name of the S3 bucket)
+Multiple Domain Names
+The Lambda@Edge functions are automatically compiled if any change is detected.
+
+The Lambda@Edge functions must be attached with the correct versions. This update can take sometime for the lambda to propagate over the world.
+Be aware you might have to rerun the terraform apply if you have an issue with the propagation.
+Image for post
+Note the lambda function version number 15 is specified
+The Lambda@Edge functions which are used for the CloudFront distribution are bundled into a single block of code for ease.
+If your own Lambda functions are large then split them into parts, otherwise you will be uploading more code in each execution than you need.
+Below you can see we are doing basic rerouting for the origin request. Another option for this simple case would have been to use the default origin setting in CloudFront. However, I already had the code for this from another project, so I included it encase I needed to do more complex routing in the future.
+Important to note that these function are only called when CloudFront refreshes not when the viewer requests the page.
+I also update the response from the origin with the security headers which we can’t add to s3. Lastly I reroute any failed requests to the index page so users who type in the wrong url will still get to the page. Another option would have been using CloudFronts error pages but since we are already using Lambda@Edge is is simpler to place here.
+
+The files above are in one Github repository which are imported into another repository using Github modules. This is done to link the version histories between multiple repositories, but also to keep source code bloat in a single repository to a minimum. Another option would have been to use terraform module versioning. However, the static assets were already imported through Github modules so it made sense to do this with the CloudFront-S3 module. Another factor is that I would have to manually update the terraform module version for each change which would be overkill.
+The module below uses the standard S3 store to keep state information and Dynamodb for state locking. The version of terraform is quite old hence the old terraform syntax. Terraform could have been updated, however, this would have been more effort than it’s worth.
+Lastly you can see APIGW triggering a lambda which calls SES. The SES service was setup independently from terraform and simply referenced.
+
+Static Assets
+The website used a template from material design lite by google. The final build is pulled together using Webpack which gaves me quite a few benefits even for such a simple site.
+Asset placement in bottom or top of HTML file
+Asset renamed for each build so the cache refreshes.
+Image minimisation and compression
+Allows Webpack dev server to be used for development.
+CSS and JS minimisation and uglification.
+Chunks are also included but not needed for such small amounts of code
+External dependencies defined so we don’t have to push down frameworks like jQuery from our CDN.
+
+Running the build we get everything built as expected
+Image for post
+Example output from Webpack build.
+Github Actions
+Github provides
+2,000 Actions minutes/month
+Free for public repositories
+which is amazing in my opinion.
+It means you can build, deploy and host all your code on Github. Which is perfect for small projects. I would even consider going this way for this project if I had the time or could be bothered to start again.
+Another benefit is you don’t have to deploy or manage your own servers like with bamboo or gitlab. The management of these servers at scale can be an issue in themselves. However, if you are looking at these solution you are probably looking at large complex deployments which cover lots of regions all over the world so Github action would not be ideal.
+I found the setup of the Github actions a little strange to begin with but quite quickly it made sense. You can use VMs or containerised environments made by others, or use your own. You pass secrets as env variables which are never exposed to anyone except you. Which having on Github made me paranoid. You can then write your own deployment scripts which you call from the yaml file which describes the workflow.
+Below you can see that we only deploy when we push a tag to the repo. This allows us to limit deployments when we version and running terraform plan whenever do a general push to master, using a different workflow described in a different yaml file.
+
+You can then see the pipeline running below.
+You might ask if you should have a pipeline for such a small project. Personally I would have a pipeline for every project I built. It does not always work out that way but if I come back to it after sometime and my laptop has changed or someone else wants to have a look it is always a pain to get started again. Having a pipelines with a pristine env and deployment strategy makes it so much easier
+Image for post
+Example pipelines from Github.
+The pipeline also invalidates the cache for CloudFront. Since we don’t cache the HTML files this is not really required but kept in since I don’t use anywhere near the free allotted invalidations per month.
+Image for post
+Cache settings for the browser are set in the Lambda@Edge shown in the node code above. You can see in the pipeline we also setcache settings in S3. These cache settings will effect how CloudFront caches.
+Image for post
+Cache settings in S3 for html pages so we never cache. Different settings used for other assets.
+Finally we set the cache in CloudFront. We specify a min TTL of 0 so CloudFront will always pull from the origin for HTML pages. We also set a large max TTL so the S3 cache value tells CloudFront to keep the assets for about a month.
+Image for post
+Cache settings in CloudFront which were set in terraform
+You can check the settings to make sure everything is working as expected:
+Image for post
+Cache set for html files
+Image for post
+Response from CloudFront
+Image for post
+Set long cache time for all assets
+Image for post
+Response from CloudFront
+We don’t want the HTML pages cached but static assets to be cached so we set both settings:
+Cache-Control:no-cache (HTML)
+OR
+Cache-Control:max-age=31536000 (Assets)
+When the new index file is sent back down to the browser all assets have new ids so those assets are pulled. This ensures browsers get the most recent changes from the origin with a simple refresh.
+Image for post
+Resource names generated by Webpack.
+Conclusion
+You can see the website here.
+If I was starting again I probably would not use the setup above. Which is a strange thing to say as a conclusion; there are a lot simpler and cheaper solutions.
+It just made sense at the time since I was already building something similar for another project I was working on, so I knew how to quickly throw it up. I also liked the control I would get from the solution; meaning, if I wanted to, I could more easily expand functionality.
+The full setup can be found in this repository including the pipeline.
+Hopefully this information is useful to anyone looking to build something similar with the tools described here.
