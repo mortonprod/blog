@@ -1,0 +1,72 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>NodeJS Logging</title><style>
+      * {
+        font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      h1 {
+        font-size: 50px;
+        margin-bottom: 17px;
+        color: #333;
+      }
+      h2 {
+        font-size: 24px;
+        line-height: 1.6;
+        margin: 30px 0 0 0;
+        margin-bottom: 18px;
+        margin-top: 33px;
+        color: #333;
+      }
+      h3 {
+        font-size: 30px;
+        margin: 10px 0 20px 0;
+        color: #333;
+      }
+      header {
+        width: 640px;
+        margin: auto;
+      }
+      section {
+        width: 640px;
+        margin: auto;
+      }
+      section p {
+        margin-bottom: 27px;
+        font-size: 20px;
+        line-height: 1.6;
+        color: #333;
+      }
+      section img {
+        max-width: 640px;
+      }
+      footer {
+        padding: 0 20px;
+        margin: 50px 0;
+        text-align: center;
+        font-size: 12px;
+      }
+      .aspectRatioPlaceholder {
+        max-width: auto !important;
+        max-height: auto !important;
+      }
+      .aspectRatioPlaceholder-fill {
+        padding-bottom: 0 !important;
+      }
+      header,
+      section[data-field=subtitle],
+      section[data-field=description] {
+        display: none;
+      }
+      </style></head><body><article class="h-entry">
+<header>
+<h1 class="p-name">NodeJS Logging</h1>
+</header>
+<section data-field="subtitle" class="p-summary">
+Logging for production nodeJS applications
+</section>
+<section data-field="body" class="e-content">
+<section name="a0b5" class="section section--body section--first section--last"><div class="section-divider"><hr class="section-divider"></div><div class="section-content"><div class="section-inner sectionLayout--insetColumn"><h3 name="fc69" id="fc69" class="graf graf--h3 graf--leading graf--title">NodeJS Logging</h3><h4 name="486e" id="486e" class="graf graf--h4 graf-after--h3 graf--subtitle">Logging for production nodeJS applications</h4><figure name="e882" id="e882" class="graf graf--figure graf-after--h4"><img class="graf-image" data-image-id="1*8WF5GxCHrCpHIGgWg5fgsw.jpeg" data-width="960" data-height="640" data-is-featured="true" src="https://cdn-images-1.medium.com/max/800/1*8WF5GxCHrCpHIGgWg5fgsw.jpeg"><figcaption class="imageCaption">Collecting some logs is easier than others…</figcaption></figure><h3 name="61e8" id="61e8" class="graf graf--h3 graf-after--figure">Introduction</h3><p name="3c80" id="3c80" class="graf graf--p graf-after--h3">This post focuses on logging for node applications within a micro-services architecture. Correlation of logs using request ids from API Gateway (APIGW) and an Application Load Balancer (ALB) is highlighted. These apps are managed containers or lambdas.</p><p name="22bf" id="22bf" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong"><em class="markup--em markup--p-em">If you are looking for more information on amalgamation of data, analysis, visualisation or storage then check our my elasticsearch post which follows loosely on from this.</em></strong></p><h3 name="5e90" id="5e90" class="graf graf--h3 graf-after--p">Creating Logs</h3><p name="3045" id="3045" class="graf graf--p graf-after--h3">First you will need to create a cloudwatch group. Some services will do this but need the correct permissions specified by an IAM role. The role should also allow for you to create streams within that group. Try to limit the permission your application have. Try to only give them access to things they actually need. Reduces the attack area of your infrastructure.</p><p name="4906" id="4906" class="graf graf--p graf-after--p">Most services create their own cloudwatch group and stream name format, specifying the app name and instance id.</p><p name="98ae" id="98ae" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong"><em class="markup--em markup--p-em">Note: You can change this format but you need to be consistent. Otherwise you will have a nightmare combining these logs for analysis later.</em></strong></p><h3 name="6912" id="6912" class="graf graf--h3 graf-after--p">Continuation Local Storage</h3><figure name="7d16" id="7d16" class="graf graf--figure graf-after--h3"><img class="graf-image" data-image-id="1*YxqFFvR6Q1xpJrRukDgcMA.png" data-width="1070" data-height="300" src="https://cdn-images-1.medium.com/max/800/1*YxqFFvR6Q1xpJrRukDgcMA.png"><figcaption class="imageCaption">Diagram showing how global variables (signified with thread ids) can be changed between function invocations © datahero.com</figcaption></figure><p name="d9d6" id="d9d6" class="graf graf--p graf-after--figure">NodeJS has many idiosyncrasies. One serious problem you will have is monitoring your applications at the request level. This is not even an issue with a micro-services architecture and tracing between apps. It’s a fundamental problem even with a single application. It stems from the fact that node does not create a new thread for each request which means we can’t tag it.</p><p name="f4c7" id="f4c7" class="graf graf--p graf-after--p">The diagram above highlights this. A function can run and set a globally available variable. When complete it passes control to the event loop. At this stage we have no idea what will run next. We could receive a new request which changes the global id. Finally the event loop runs function 2, with possibly a different request id. <strong class="markup--strong markup--p-strong">Ahhh!</strong></p><p name="559b" id="559b" class="graf graf--p graf-after--p"><em class="markup--em markup--p-em">How do we fix this?</em></p><p name="a8f9" id="a8f9" class="graf graf--p graf-after--p">We have two options: closure or passing the id as an argument.</p><p name="7009" id="7009" class="graf graf--p graf-after--p">Both methods will require you to refactor much of your code. You will need to reposition the declaration of your functions or add an id as an argument to each one. This is messy and error prone. The issue is passing context to every function which calls a function.</p><p name="ba7b" id="ba7b" class="graf graf--p graf-after--p">This is where continuation local storage (CLS) comes in. It simulates thread storage by implicitly passing context to every callback. This is done using an experimental feature known as async_hooks which, if I really simplify it, is a function which is called before each callback. This function updates the callbacks arguments with the correct context.</p><h3 name="d144" id="d144" class="graf graf--h3 graf-after--p">API Gateway and ALB Request Headers</h3><p name="ab12" id="ab12" class="graf graf--p graf-after--h3"><em class="markup--em markup--p-em">Even if we can get the id into our logs what id should be use?</em></p><p name="df17" id="df17" class="graf graf--p graf-after--p">Many AWS services will create a request id for you. APIGW does this by default and ALB can be configured to do so. It is better to use these request ids since AWS will use this same tag to correlate their own request information. Otherwise you would have to generate your own id and then find what AWS id corresponds to your own.</p><h3 name="44e1" id="44e1" class="graf graf--h3 graf-after--p">Applications</h3><p name="32c2" id="32c2" class="graf graf--p graf-after--h3">Your own project will have its own application types. To give an overview of some of our apps I have listed some situations below:</p><ul class="postList"><li name="0d56" id="0d56" class="graf graf--li graf-after--p">HTTP Express server container</li><li name="8064" id="8064" class="graf graf--li graf-after--li">SQS/RabbitMQ container listener</li><li name="9df3" id="9df3" class="graf graf--li graf-after--li">SQS lambda listener</li><li name="eca4" id="eca4" class="graf graf--li graf-after--li">SFTP Server</li></ul><p name="ddb5" id="ddb5" class="graf graf--p graf-after--li">As you can see we have a few different situations. This makes finding a common solution for all difficult. Take containers vs lambdas: We need CLS for all containers but not for lambda since each lambda invocation deals with a single request. Additionally, we could use CLS express tool but this would not work for SQS listeners or SFTP server.</p><h3 name="dc8b" id="dc8b" class="graf graf--h3 graf-after--p">Solution</h3><p name="20cd" id="20cd" class="graf graf--p graf-after--h3">Below you will find our solution for implementing CLS. It uses the cls-hooked library which is used by many enterprise tools, one example being the tracing tool x-ray.</p><p name="2899" id="2899" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong"><em class="markup--em markup--p-em">Note: CLS has a bug/feature which is it will not pass context to every function. This is done since you probably don’t want to pass context to function calls like database connection pools. So you need to update CLS to work for all the tools you currently use. In most cases this is very easy but sometimes it can be a pain since you need to keep track of what tools developers are using so you don’t lose your request id. Other tools use a plugin model but I could not find anything similar for cls-hooked.</em></strong></p><p name="ff33" id="ff33" class="graf graf--p graf-after--p">You can see we place in shimmers so context is passed correctly between mongoose calls.</p><p name="bfbb" id="bfbb" class="graf graf--p graf-after--p">The module looks for headers which will specify the request id. We don’t know if we will be attached to a ALB or APIGW so we look for both at all times. We also have an express specific tool and a general one. This is so we can use this tool for express and other application types.</p><figure name="9e93" id="9e93" class="graf graf--figure graf--iframe graf-after--p"><script src="https://gist.github.com/mortonprod/1708f00c3c89f9b59f5440afac259ab4.js"></script></figure><p name="f64d" id="f64d" class="graf graf--p graf-after--figure">CLS creates a new logger and info object per request which also contains the request id. You can access this info object the same way you access the logger. Moreover, you can use this info object to store other information which you want at the request level such as user info, transaction ids etc.</p><p name="c6b2" id="c6b2" class="graf graf--p graf-after--p"><em class="markup--em markup--p-em">The more you research it CLS becomes a very useful tool.</em></p><h3 name="3919" id="3919" class="graf graf--h3 graf-after--p">How to use it</h3><p name="71a0" id="71a0" class="graf graf--p graf-after--h3">An example use case is the express server below. You need to include it as middleware so each request initialises the logger and info object.</p><figure name="c80e" id="c80e" class="graf graf--figure graf--iframe graf-after--p"><script src="https://gist.github.com/mortonprod/0a6f68bc132858017b055bbd9e620cb0.js"></script></figure><p name="3fa7" id="3fa7" class="graf graf--p graf-after--figure">If you need to use this with anything other than an express server then the middleware will return a standard CLS storage object. Like any use of CLS you need to wrap all your code within a callback so it passes the correct context.</p><p name="5b3f" id="5b3f" class="graf graf--p graf-after--p">We needed to include mongoose to fully test the CLS behaviour. If your applications have any other database or tool running then you will need to include that in your tests. You could rely on the CLS tool you are using to just work but that is a risk you take.</p><p name="7c79" id="7c79" class="graf graf--p graf-after--p">Finally, you way wonder why we specify</p><pre name="c7b7" id="c7b7" class="graf graf--pre graf-after--p">cls.logger.info()</pre><p name="8c81" id="8c81" class="graf graf--p graf-after--pre">and not</p><pre name="cad1" id="cad1" class="graf graf--pre graf-after--p">let logger = cls.logger<br>logger.info()</pre><p name="fba2" id="fba2" class="graf graf--p graf-after--pre">Well the first once will work and the second one will not.</p><p name="b296" id="b296" class="graf graf--p graf-after--p">Under the hood the module is a proxy so when you reassign it you are going back to having a single static logger. <strong class="markup--strong markup--p-strong">Do not do this even if it does look a bit weird!</strong></p><h3 name="c562" id="c562" class="graf graf--h3 graf-after--p">Conclusion</h3><p name="351b" id="351b" class="graf graf--p graf-after--h3">With this setup you can have logs with request ids. Perfect!<strong class="markup--strong markup--p-strong"> </strong>However, cloudwatch is not really capable of detailed searches and visualisations so you will need to export those logs into something more advanced.</p><p name="089c" id="089c" class="graf graf--p graf-after--p graf--trailing"><em class="markup--em markup--p-em">Good Luck!</em></p></div></div></section>
+</section>
+<footer><p>By <a href="https://medium.com/@mortonprod" class="p-author h-card">Alexander Morton</a> on <a href="https://medium.com/p/4bb1aeb38af"><time class="dt-published" datetime="2019-09-22T13:27:04.904Z">September 22, 2019</time></a>.</p><p><a href="https://medium.com/@mortonprod/nodejs-logging-4bb1aeb38af" class="p-canonical">Canonical link</a></p><p>Exported from <a href="https://medium.com">Medium</a> on July 24, 2021.</p></footer></article></body></html>
