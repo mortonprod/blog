@@ -1,0 +1,85 @@
+How to Melt a Webpage
+Using web-scrapping and WebGL to melt any webpage for fun.
+What It Does
+So I created a website which ‘melts’ other webpages.
+Ok let’s be frank: this does not melt webpages. Basically, it finds all ‘greyish’ pixels and then moves them slowly down the page. So you put in any domain name you want and then press the submit button, the submitted webpage is then rendered and when the user clicks a button or scrolls down the page the webpage seems to ‘melt’.
+The best way of describing this is with an example.
+
+An example of PageMelt working on the StackOverflow website. Source: Image by Author.
+Another example is shown below demonstrating how to submit a website.
+
+An example of PageMelt working on the BBC website. Source: Image by Author.
+You can learn more about the website by visiting it:
+Page Melt
+How it Works Enter a domain and see the page instantly melt when you try to scroll or hit the keypad. It basically…
+pagemelt.alexandermorton.co.uk
+
+Why I Built It
+Now the question you might be asking yourself is why would any sane person make this? First of all, sanity is often just a matter of perspective or majority rule; however, I would be pushed to justify those arguments in this case since this project was of a particular wacky nature. So lets try a couple of other justifications:
+Cool Technology
+Something I would use
+Technology
+A few interesting technologies are used here
+Puppeteer
+AWS Lambda
+Chrome AWS Lambda
+APIGW
+Serverless Framework
+CloudFront
+S3
+WebGL
+Session Storage
+A lot of these technologies I use everyday or have used in the past at work so I was not that interest in all of them. My main focus was on WebGL and HTML canvas. I had played about with these in the past but never found a good use case I wanted to publish.
+Something I Would Use
+This might be just me and people I know so maybe speaks more to our sense of humour, but for years in university messing about with peoples screens was something we did. Never anything serious to break a computer but enough to throw them off so we could laugh at their confusion.
+So recently this came up in conversation with someone and I began to think if there was some service which did this easily. I could find online web-scrappers but nothing which would instantly melt a page on a button click or mouse move. I was told about some apps which did something similar but that would mean downloading an application which I thought lots of people would be opposed to; I know I would be on my machine.
+If there is something similar let me know.
+How It Works
+There is not much to it when you get over the first few hurdles.
+I originally wanted to do everything on the browser since this would save me having to setup any server; however, after a quick think I realised this would be impossible since I would fall foul to CORS: Most website servers, at least the ones which care about security, set the ‘Access-Control-Allow-Origin’ header to tell the browser what domains can access it’s endpoint. This would make most websites render incorrectly. So I knew I needed to scrape on an external server.
+Backend
+This is more costly and I was not willing to pay more than pennies a month for a joke website so AWS lambda was the only option. This did not completely assuage my concerns since I was now worried about memory usage and size limits. Memory usage could be quite large for having to run a headless browser, and if I had to package one into a lambda I could be well over the 50MB size limit.
+After a bit of a reading around I found this article which alleviated my concerns about the overall size of the function. Additionally, it also specified an existing AWS lambda layer for headless chrome so I no longer had to make by own layer giving me less work. The example also used puppeteer which provides an API in nodeJS to control headless chrome which I was using already for my experiments so I did not have to change this either. Complete win!
+You can see the final lambda function which does everything the PageMelt website needs:
+
+AWS lambda function to web-scrape webpages and store output in s3. Source: Image by Author.
+A few things to note:
+Placed in CORS check to offer very limited security check
+Takes in clients browser size and type which we pass to puppeteer
+Saves the output of screenshot to an s3 bucket
+Generates a signed URL to pass to the browser which will only work for 30 seconds
+Keep the quality of the screenshot to 30 and use jpg to keep storage size to a minimum
+Ensure the browser stores the image so it can be rerun without having to call s3 again after 30 second timeout
+I store the screenshot in s3 but I could have just pushed the jpg to the browser from the lambda function; however, the cost was relatively small and I was wanted to see what screenshots people were taking.
+With this lambda we can now deploy using the Serverless framework:
+
+Serverless framework setup for the backend infrastructure. Source: Image by Author.
+A few things to note:
+Setup CORS on the bucket as some limited security
+Throttle the API calls to 10 a second since this is only a test site to begin with and we don’t want to be swamped by some nefarious user
+Limit the total number of calls to 10,000 to mitigate the damage of wicked users
+Pass in the pre-made ‘chrome-aws-lambda’ layer since there is no point recreating this
+Now we have the backend setup we need to turn to the frontend.
+Frontend
+We need to get the information needed by the lambda from the frontend. This is quite simple and just involves collecting the information, passing it to the lambda and getting the URL of the s3 bucket image we want to download. Since we are moving from the index.html page to the canvas.html page to render the scraped webpage we store the s3 domain in session storage.
+
+The form Javascript code used in index.html. Source: Image by Author.
+Once we have the s3 image name on the canvas.html page we can render this as a HTML img which is then moved on to a canvas element. We must ensure that we don’t render the canvas element until the img is loaded from the server. Additionally, we must also make sure that all window listeners are called only once or we will crash our browser calling canvas updates again and again and again….
+
+The start of the Javascript code used in canvas.html. Source: Image by Author.
+Next we to consider how we will update the pixels. As a start I wanted to just move ‘greyish’ pixels down the page.
+
+This will start from the bottom of the page and move down the pixels one by one. Source: Image by Author.
+Next we do the same thing again but now the pixels are dripping down the page and not dropping.
+
+This will start from the bottom of the page and move down pixels one by one but not removing the grey pixels above. Source: Image by Author.
+The term ‘greyish’ is defined below. Basically, if the RGB values are similar and under a certain threshold then they are defined as grey. This is done using the equation for variance which most people would be familiar with.
+
+Calculate what pixels are grey and should be moved. Source: Image by Author.
+Converting pixels from 1D format of the image data to 2D grid we are familiar with is done below. The thing to note is that the 1D image stacks up RGBA values for each pixel one after the other; so you can transform between them using a simple formula.
+
+Formula for transforming between data types. Source: Image by Author.
+Once this is all setup we package the code with Webpack and deploy using a Github action to a s3 bucket behind CloudFront. Security headers and basic routing is provided by lambda edge functions.
+Conclusion
+This might seem like a complete waste of time but I really enjoyed this project since I love the potential of WebGL in the browser. You can find lots of better examples of WebGL but I liked the strangeness of this. One person described it as modern art but I would not go that far; I just think it looks funny.
+There are a few things I can think of doing to improve this project like identifying the text using optical character recognition and making that fall but that would be for another day.
