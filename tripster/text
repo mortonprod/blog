@@ -1,0 +1,164 @@
+Creating a Psychedelic WebAssembly Chrome Extension
+How to turn all images on a website into a kaleidoscope of colour
+
+Image Manipulation of CNN Sports Page
+What It Does
+I created a chrome extension that will:
+
+Scan all images on a website
+Replace those images with iframes
+Load a WebAssembly (Wasm) module for each iframe written in C
+Load the original website’s image into the module’s memory to be manipulated and written back into a HTML canvas element
+Why? This gives us the ability to manipulate every image on a website anyway we want.
+
+With this I needed to decide what sort of manipulation I wanted to do. I knew I wanted to create something weird and visually appealing but had no exact direction in mind.
+
+After some playing I came up with tripster a psychedelic trip back to woodstock man…. 😃
+
+The best way to understand this is with a demonstration, first lets look at how the extension changes the google home page.
+
+
+This is one of my favourites. I was not expecting the google title to act like this since i was simply playing with the algorithm and reloading to see what result I got.
+
+After this result I decided to take a look at how it changes the BBC home page.
+
+
+After this result I knew I had got the effect I was looking for. A trippy image manipulator! 😈
+
+If you would like to try this out yourself you can find the web extension by visiting:
+
+Tripster
+This is a chrome extension to manipulate website images.
+chrome.google.com
+
+Why I Built It
+This is first and foremost a proof of concept (POC). It is simply a learning exercise for myself and might be useful to others in the future. I would not use this for anything crucial in production.
+
+The two main topics I wanted to learn were
+
+Wasm
+Chrome Extensions
+I have read lots of things about Wasm but had never had a chance to use it.
+
+One thing I love about Wasm is the idea you can take packages written in different languages for other platforms and use them in the browser. This appeals to my lazy side. Another aspect I love is it expands what you can do in the browser due it’s performance enhancements.
+
+One thing to note about Wasm in regard to performance is that you don’t always get a performance increase even though this tends to be the go to selling point. It really depends on the underlying code you have written and what it does.
+
+The idea of image manipulation was in part due to another project I had done with the HTML canvas. The chrome extension part came last since this was the only way I could create something like this, but was also interesting since I had never created one before.
+
+How It Works
+The extension is using a version 3 manifest since you can’t create new version 2 extensions anymore.
+
+
+The inability to use version 2 means that the iframe needs to be in a sandbox since this is the only place you can set the correct content security policy:
+
+sandbox allow-scripts script-src 'self' 'unsafe-eval'; img-src data:
+This is needed so you can load up the image data blob and run the Wasm module. Without the unsafe-eval the Wasm module will fail as mentioned here.
+
+You could use wasm-unsafe-eval. However, once I had got it working I did not dare to change it since it was a nightmare getting this right and it’s running in a sandbox so can’t cause any harm.
+
+You can see that on each page load the content script will run doing the following:
+
+
+You can see that we do pretty much the same thing for each trip TYPE, the only difference is we set the different TYPE as a global variable to be used by the other functions.
+
+The event which triggers this comes from the service worker. This event is triggered here since we want to have a global TYPE for all tabs. So when we change an option we
+
+Get the popup JavaScript (JS) to save the TYPE to local storage
+Trigger an event hander in the service worker on local storage change to send this to each browser tab
+Trigger all browser tab events which sets the TYPE
+The code for this, if you are interested, is all in the full repo and not shown here.
+
+The code above can clearly be refactored since the only difference is the NONE switch. Furthermore we run scroll on first load so we get the effect right away. This would not be needed if we ensure the service worker fires an event after the content script loads. Since this is a POC I did not bother.
+
+The implementation functions used above are shown below.
+
+
+Now we have the TYPE and the handler for a debounced scroll event, we need to understand what scroll function does. There are a lot of moving parts here so lets go through it in chronological order:
+
+Collect all visible images
+Create an iframe for each image passing the TYPE and a unique ID based on what image it will replace
+Place the iframe in the exact same location as the image using the getComputedStyle function
+Created a base64 encoded data blob of each image and send this data to the iframe once it is fully loaded
+A few other setups achieving the same result was tried but failed for a few reasons:
+
+You can’t run Wasm in a content script due to manifest version 3 limitations; it must be in a sandbox
+You also can’t send this data to the iframe in the URL since URLs have limited size.
+You are therefore forced to send this data as a posted message to the iframe which does not have a data transfer limit. This data needs to be sent after the iframe has loaded not before. Therefore, we need the iframe to send a ‘hello’ event which contains a unique ID. This ID is needed since the content page does not know what iframe is ready and needs to know what image to send.
+
+You can see above we are creating multiple handlers for the iframe ‘hello’ message with the ID. Each function will only respond to the correct iframe since it checks the iframe’s ID it has access to via closure in the if statement:
+
+if ( e.data === iframe.id.substring(0,1000) && e.origin === "null") {
+There is another recommended way to check this when you do a bit of research:
+
+if ( e.data === "loaded" && e.origin === "null" && e.source === iframe.contentWindow) {
+This should work in principle since it checks that e.source and iframe.contentWindow are the same underlying object. However, this worked in development but not in the deployed extension! Therefore, I use the ID method above.
+
+At this point we have the iframe in the correct location and with the image data in its sandbox. Now we need the iframe to take over. Below you can see the JS which runs in the iframe.
+
+
+Let break this down assuming we have successfully got the image blob to the iframe sandbox:
+
+The blob is loaded into a HTML image tag which we can then load into a HTML canvas
+The canvas data is then loaded into the Wasm memory so we can access it in our C function
+We then render the canvas in a loop as the C function changes the underlying pixels
+The C functions we are using can be seen below.
+
+
+Full disclosure, the code above was taken from this example. I can’t thank them enough since I was lost at this point! All I did was slightly change the code for my own function to get the effect I needed.
+
+Above you can see we are making a huge array in the stack which we then return as a pointer to our JS running in the iframe.
+
+This approach is not how it should be done. We should have created memory in the HEAP for the image to be placed in.
+
+Now we have our JS and C code we need to
+
+Create the compiled Wasm module out of our C code
+Create the JS boilerplate which will load our module into our browser
+This can be done using Emscripten which is described on the main page as:
+
+Emscripten is a complete compiler toolchain to WebAssembly, using LLVM, with a special focus on speed, size, and the Web platform.
+
+Basically it is like using your standard GCC compiler with a few more tools. Below you can see this in action.
+
+emcc --post-js src/post.js -o static/iframe.js src/image/main.c -s WASM=1 -s EXPORTED_FUNCTIONS='["_render", "_init", "_psyrender"]' -s EXPORTED_RUNTIME_METHODS='["cwrap"]' -s ALLOW_MEMORY_GROWTH
+This command will take the JS above then place it at the bottom of boilerplate JS which will load the Wasm module. It also exports inbuilt Emscripten functions like cwrap which we use to call our C functions in JS. This will output a JS file and a Wasm file which you can load into a webpage as you usually would.
+
+The command above is not optimised in anyway since this is just a POC. The description of all the available flags was very good and I would recommend having a look if you use this tool.
+
+With this we have the extension we want to deploy into the chrome web store.
+
+Deploying the Chrome Extension
+Deploying the chrome extension was relatively easy. Once you have run the command above to create the Wasm file you can run
+
+npm run build
+cd dist
+ zip -r ../extension.zip *
+The npm command uses webpack to bundle the file together into a distribution we can zip and upload to the chrome web store.
+
+I left the production build as development since chrome web store asks you not to minimise the code so they can review it. I did not include the C source code only the Wasm output. I expected this might be an issue, but surprisingly it passed the review process; so all’s well that ends well 😃.
+
+With the zip I created a developer account with a new email as they asked and payed my one off $5. I then uploaded the zip along with images which you can see in the extension homepage.
+
+Additionally, I had to justify why I needed the extension permissions I asked for in the manifest. This was easy enough since I needed access to all webpages for it to function as expected and I needed access to storage so I can save the latest TYPE option a user has selected.
+
+This was the easy part. The one part which was a nightmare is after a few days my extension was reviewed, I then installed it on my browser and…. it did not work!
+
+The issue was my own fault since I had a race condition there the image data blob was being sent after the module was loaded so the event handler was not fired. This is completely understandable.
+
+What I don’t understand is what caused the difference between the development extension and the deployed extension. This was very frustrating since I had to speculate what it could be, deploy, then test, then repeat if needed. This took about a week to get right since it takes a few days for each review.
+
+Finally it worked for version 0.0.3 as you can see.
+
+Conclusion
+This example as mentioned before is just a POC which if you are interest you can find here:
+
+GitHub - mortonprod/tripster: A proof of concept to manipulate website images using WebAssembly in…
+A proof of concept to manipulate website images using WebAssembly in a chrome extension - GitHub - mortonprod/tripster…
+github.com
+
+However, I do feel it will be useful to others since I struggled to find approachable examples using Wasm. You can find a few examples but lots are sometimes too basic and don’t go far enough in explaining how things like memory management works. In particular how memory is shared between JS and the WASM module for something as complex as image manipulation. This does not even touch the lack of information on how to get WASM working within the different chrome extension versions. This is all completely understandable since Wasm is not used as broadly as it could be.
+
+This is not to say I go into great detail here. A novice like myself would not be so bold 😄. I just hope that enough people plugging away at it will produce more and more examples making the process easier.
+
+Looking forward I would like to see what else I can do with this setup beyond just making strange but pretty images.
